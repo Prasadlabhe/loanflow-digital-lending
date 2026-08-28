@@ -1,0 +1,120 @@
+{
+  "components": [
+    {
+      "content": "Loan Application Review",
+      "type": "html",
+      "layout": {
+        "row": "Row_0h6njce",
+        "columns": null
+      },
+      "id": "Field_1v6stgw"
+    },
+    {
+      "label": "Application ID",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1ss8p2y",
+        "columns": null
+      },
+      "id": "Field_14zp7eq",
+      "key": "applicationId",
+      "readonly": true
+    },
+    {
+      "label": "Applicant Name",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1o6vrpa",
+        "columns": null
+      },
+      "id": "Field_1qa493x",
+      "key": "applicantName",
+      "disabled": false,
+      "readonly": true
+    },
+    {
+      "label": "Loan Amount",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_08dn3sw",
+        "columns": null
+      },
+      "id": "Field_0jfs7co",
+      "key": "loanAmount",
+      "readonly": true
+    },
+    {
+      "label": "Monthly Income",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1v5bftb",
+        "columns": null
+      },
+      "id": "Field_0hmi0l3",
+      "key": "monthlyIncome",
+      "readonly": true
+    },
+    {
+      "label": "Credit Score",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1l6aga2",
+        "columns": null
+      },
+      "id": "Field_1qh6150",
+      "key": "creditScore",
+      "readonly": true
+    },
+    {
+      "label": "Review Decision",
+      "values": [
+        {
+          "label": "Approve",
+          "value": "APPROVED"
+        },
+        {
+          "label": "Reject",
+          "value": "REJECTED"
+        }
+      ],
+      "type": "radio",
+      "layout": {
+        "row": "Row_0oxngmp",
+        "columns": null
+      },
+      "id": "Field_1ve0bxp",
+      "key": "reviewDecision"
+    },
+    {
+      "label": "Review Comment",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_1sdskt3",
+        "columns": null
+      },
+      "id": "Field_1ut1ob4",
+      "key": "reviewComment"
+    },
+    {
+      "label": "Reviewed By",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1xdim8w",
+        "columns": null
+      },
+      "id": "Field_1n6p5wb",
+      "key": "reviewedBy",
+      "defaultValue": "Prasad Labhe",
+      "readonly": true
+    }
+  ],
+  "type": "default",
+  "id": "loan-review-form",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

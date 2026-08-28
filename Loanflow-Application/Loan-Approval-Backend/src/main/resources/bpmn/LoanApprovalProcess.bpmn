@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1dnx7q7" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.49.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_1moge23">
+    <bpmn:participant id="Participant_1fylr85" name="Loan Approval Process" processRef="Loan_Approval_Process" />
+  </bpmn:collaboration>
+  <bpmn:process id="Loan_Approval_Process" name="Loan_Approval_Process" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>Flow_1cj9qgf</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_1mfc3zu" name="Validate Loan">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="validate-loan" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1cj9qgf</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ge8gnd</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1cj9qgf" sourceRef="StartEvent_1" targetRef="Activity_1mfc3zu" />
+    <bpmn:sequenceFlow id="Flow_1ge8gnd" sourceRef="Activity_1mfc3zu" targetRef="Activity_0zq4ut5" />
+    <bpmn:endEvent id="Event_0lmf80t" name="End">
+      <bpmn:incoming>Flow_0ehwxrk</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0ehwxrk" sourceRef="Activity_0zq4ut5" targetRef="Event_0lmf80t" />
+    <bpmn:serviceTask id="Activity_0zq4ut5" name="Approve Loan">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="approve-loan" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1ge8gnd</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ehwxrk</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1moge23">
+      <bpmndi:BPMNShape id="Participant_1fylr85_di" bpmnElement="Participant_1fylr85" isHorizontal="true">
+        <dc:Bounds x="160" y="90" width="600" height="250" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="232" y="192" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="238" y="235" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0t0l6e1_di" bpmnElement="Activity_1mfc3zu">
+        <dc:Bounds x="320" y="170" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0lmf80t_di" bpmnElement="Event_0lmf80t">
+        <dc:Bounds x="652" y="192" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="660" y="235" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ju4r2l_di" bpmnElement="Activity_0zq4ut5">
+        <dc:Bounds x="480" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1cj9qgf_di" bpmnElement="Flow_1cj9qgf">
+        <di:waypoint x="268" y="210" />
+        <di:waypoint x="320" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ge8gnd_di" bpmnElement="Flow_1ge8gnd">
+        <di:waypoint x="420" y="210" />
+        <di:waypoint x="480" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ehwxrk_di" bpmnElement="Flow_0ehwxrk">
+        <di:waypoint x="580" y="210" />
+        <di:waypoint x="652" y="210" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
