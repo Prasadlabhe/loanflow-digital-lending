@@ -18,7 +18,8 @@ public class CorsConfig {
 
                 registry.addMapping("/api/**")
                         .allowedOrigins(
-                                "http://localhost:5173"
+                                "http://localhost:5173",
+                                "https://loanflow-frontend-5lt2.onrender.com"
                         )
                         .allowedMethods(
                                 "GET",
