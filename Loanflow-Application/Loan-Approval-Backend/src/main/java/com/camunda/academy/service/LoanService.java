@@ -45,7 +45,7 @@ public class LoanService {
         // 3. Start Camunda process
         var result = camundaClient
                 .newCreateInstanceCommand()
-                .bpmnProcessId("Loan_Approval_Process")
+                .bpmnProcessId("LoanApprovalProcess")
                 .latestVersion()
                 .variables(variables)
                 .send()
