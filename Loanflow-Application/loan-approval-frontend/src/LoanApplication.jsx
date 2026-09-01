@@ -10,21 +10,23 @@ const initialForm = {
 };
 
 function LoanApplication({ onViewApplications }) {
-    const [form, setForm] = useState(initialForm);
+    const [formData, setFormData] = useState(initialForm);
     const [status, setStatus] = useState("IDLE");
     const [application, setApplication] = useState(null);
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
     const mountedRef = useRef(true);
-    const pollTimeoutRef = useRef(null);
+    const pollingTimeoutRef = useRef(null);
 
     useEffect(() => {
+        mountedRef.current = true;
+
         return () => {
             mountedRef.current = false;
 
-            if (pollTimeoutRef.current) {
-                window.clearTimeout(pollTimeoutRef.current);
+            if (pollingTimeoutRef.current) {
+                window.clearTimeout(pollingTimeoutRef.current);
             }
         };
     }, []);
@@ -32,7 +34,7 @@ function LoanApplication({ onViewApplications }) {
     const handleChange = (event) => {
         const { name, value } = event.target;
 
-        setForm((current) => ({
+        setFormData((current) => ({
             ...current,
             [name]: value,
         }));
@@ -58,37 +60,67 @@ function LoanApplication({ onViewApplications }) {
             setStatus(data.status);
 
             if (data.status === "PROCESSING") {
-                pollTimeoutRef.current = window.setTimeout(() => {
+                pollingTimeoutRef.current = window.setTimeout(() => {
                     getApplicationStatus(applicationId);
                 }, 1000);
+            } else {
+                setSubmitting(false);
             }
         } catch (requestError) {
-            if (mountedRef.current) {
-                setError(
-                    requestError.message ||
-                    "Something went wrong while checking your application."
-                );
-                setStatus("ERROR");
+            if (!mountedRef.current) {
+                return;
             }
+
+            setSubmitting(false);
+            setError(
+                requestError.message ||
+                "Something went wrong while checking your application."
+            );
         }
     };
 
     const submitLoan = async (event) => {
         event.preventDefault();
 
-        setSubmitting(true);
         setError("");
         setApplication(null);
+
+        const payload = {
+            applicantName: formData.applicantName.trim(),
+            loanAmount: Number(formData.loanAmount),
+            monthlyIncome: Number(formData.monthlyIncome),
+            creditScore: Number(formData.creditScore),
+        };
+
+        if (
+            !payload.applicantName ||
+            !payload.loanAmount ||
+            !payload.monthlyIncome ||
+            !payload.creditScore
+        ) {
+            setError("Please complete all application fields.");
+            return;
+        }
+
+        if (payload.loanAmount <= 0) {
+            setError("Loan amount must be greater than zero.");
+            return;
+        }
+
+        if (payload.monthlyIncome <= 0) {
+            setError("Monthly income must be greater than zero.");
+            return;
+        }
+
+        if (payload.creditScore < 300 || payload.creditScore > 900) {
+            setError("Credit score must be between 300 and 900.");
+            return;
+        }
+
+        setSubmitting(true);
         setStatus("PROCESSING");
 
         try {
-            const payload = {
-                applicantName: form.applicantName.trim(),
-                loanAmount: Number(form.loanAmount),
-                monthlyIncome: Number(form.monthlyIncome),
-                creditScore: Number(form.creditScore),
-            };
-
             const response = await fetch(`${API_URL}/api/loans`, {
                 method: "POST",
                 headers: {
@@ -98,7 +130,9 @@ function LoanApplication({ onViewApplications }) {
             });
 
             if (!response.ok) {
-                throw new Error("Unable to submit the loan application.");
+                throw new Error(
+                    "Unable to submit the loan application. Please try again."
+                );
             }
 
             const data = await response.json();
@@ -108,357 +142,371 @@ function LoanApplication({ onViewApplications }) {
             }
 
             setApplication(data);
-            setStatus(data.status || "PROCESSING");
-            setSubmitting(false);
 
             if (data.applicationId) {
-                getApplicationStatus(data.applicationId);
-            }
-        } catch (requestError) {
-            if (mountedRef.current) {
-                setError(
-                    requestError.message ||
-                    "Unable to submit your application."
-                );
-                setStatus("ERROR");
+                await getApplicationStatus(data.applicationId);
+            } else {
+                setStatus(data.status || "PROCESSING");
                 setSubmitting(false);
             }
+        } catch (requestError) {
+            if (!mountedRef.current) {
+                return;
+            }
+
+            setSubmitting(false);
+            setStatus("ERROR");
+            setError(
+                requestError.message ||
+                "Unable to submit your application."
+            );
         }
     };
 
-    const resetForm = () => {
-        if (pollTimeoutRef.current) {
-            window.clearTimeout(pollTimeoutRef.current);
+    const resetApplication = () => {
+        if (pollingTimeoutRef.current) {
+            window.clearTimeout(pollingTimeoutRef.current);
         }
 
-        setForm(initialForm);
-        setStatus("IDLE");
+        setFormData(initialForm);
         setApplication(null);
+        setStatus("IDLE");
         setError("");
         setSubmitting(false);
     };
 
+    const formatCurrency = (value) => {
+        if (value === undefined || value === null || value === "") {
+            return "—";
+        }
+
+        return new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 0,
+        }).format(Number(value));
+    };
+
     const statusConfig = {
         APPROVED: {
-            label: "Application approved",
-            icon: "✓",
-            className: "approved",
+            label: "Approved",
             description:
-                "The automated lending workflow has approved this application.",
+                "The demonstration workflow has approved this application.",
+            className: "approved",
+            icon: "✓",
         },
         REJECTED: {
-            label: "Application declined",
-            icon: "×",
-            className: "rejected",
+            label: "Rejected",
             description:
-                "The decision engine determined that the application does not meet the current lending criteria.",
+                "The demonstration workflow has rejected this application.",
+            className: "rejected",
+            icon: "×",
         },
         REVIEW: {
-            label: "Manual review required",
-            icon: "◎",
-            className: "review",
+            label: "Manual review",
             description:
-                "The workflow has routed this application to a human reviewer.",
+                "This application has been routed for manual assessment.",
+            className: "review",
+            icon: "!",
         },
         PROCESSING: {
-            label: "Processing application",
-            icon: "◌",
-            className: "processing",
+            label: "Processing",
             description:
-                "Your application is moving through the automated lending workflow.",
+                "Camunda is currently processing the application workflow.",
+            className: "processing",
+            icon: "…",
         },
     };
 
     const currentStatus = statusConfig[status];
 
     return (
-        <section className="loan-application-section" id="loan-application">
-            <div className="section-shell">
-                <div className="application-intro">
-                    <div>
-                        <span className="section-kicker">
-                            DIGITAL LOAN APPLICATION
-                        </span>
-
-                        <h2>
-                            Your application.
-                            <br />
-                            <span>One intelligent workflow.</span>
-                        </h2>
-                    </div>
-
-                    <div className="application-intro-meta">
-                        <span>
-                            <i />
-                            Secure workflow
-                        </span>
-                        <span>~2 min</span>
-                    </div>
-                </div>
-
-                <div className="application-layout">
-                    <div className="application-card">
-                        <div className="card-header">
-                            <div>
-                                <span className="card-step">STEP 01 / 01</span>
-                                <h3>Tell us about yourself</h3>
-                            </div>
-
-                            <div className="card-lock">⌁</div>
+        <div className="loan-application-component">
+            <div className="application-layout">
+                <div className="application-card">
+                    <div className="application-card-top">
+                        <div>
+                            <span className="section-eyebrow">
+                                APPLICATION
+                            </span>
+                            <h3>Tell us about your loan.</h3>
+                            <p>
+                                Use sample information to experience the
+                                LoanFlow decision workflow.
+                            </p>
                         </div>
 
-                        <form onSubmit={submitLoan}>
-                            <div className="form-grid">
-                                <label className="form-field full-width">
-                                    <span>Applicant name</span>
-                                    <div className="input-wrap">
-                                        <span className="input-icon">◎</span>
-                                        <input
-                                            type="text"
-                                            name="applicantName"
-                                            value={form.applicantName}
-                                            onChange={handleChange}
-                                            placeholder="Enter your full name"
-                                            required
-                                        />
-                                    </div>
-                                </label>
-
-                                <label className="form-field">
-                                    <span>Loan amount</span>
-                                    <div className="input-wrap">
-                                        <span className="input-prefix">₹</span>
-                                        <input
-                                            type="number"
-                                            name="loanAmount"
-                                            value={form.loanAmount}
-                                            onChange={handleChange}
-                                            placeholder="500000"
-                                            min="1"
-                                            required
-                                        />
-                                    </div>
-                                </label>
-
-                                <label className="form-field">
-                                    <span>Monthly income</span>
-                                    <div className="input-wrap">
-                                        <span className="input-prefix">₹</span>
-                                        <input
-                                            type="number"
-                                            name="monthlyIncome"
-                                            value={form.monthlyIncome}
-                                            onChange={handleChange}
-                                            placeholder="80000"
-                                            min="1"
-                                            required
-                                        />
-                                    </div>
-                                </label>
-
-                                <label className="form-field full-width">
-                                    <span>Credit score</span>
-                                    <div className="input-wrap">
-                                        <span className="input-icon">◈</span>
-                                        <input
-                                            type="number"
-                                            name="creditScore"
-                                            value={form.creditScore}
-                                            onChange={handleChange}
-                                            placeholder="750"
-                                            min="300"
-                                            max="900"
-                                            required
-                                        />
-                                        <span className="input-helper">
-                                            300–900
-                                        </span>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <div className="form-info">
-                                <div className="info-icon">i</div>
-                                <p>
-                                    This portfolio demo uses an in-memory
-                                    application store. No loan or personal data
-                                    is permanently saved.
-                                </p>
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="submit-button"
-                                disabled={submitting}
-                            >
-                                {submitting ? (
-                                    <>
-                                        <span className="button-spinner" />
-                                        Starting workflow...
-                                    </>
-                                ) : (
-                                    <>
-                                        Submit application
-                                        <span>↗</span>
-                                    </>
-                                )}
-                            </button>
-                        </form>
+                        <span className="form-step">01 / 01</span>
                     </div>
 
-                    <div className="workflow-preview">
-                        <div className="workflow-preview-top">
-                            <span className="card-step">LIVE WORKFLOW</span>
-                            <span className="workflow-online">
+                    <form onSubmit={submitLoan}>
+                        <div className="form-section-label">
+                            Applicant information
+                        </div>
+
+                        <label className="field">
+                            <span>Applicant name</span>
+                            <input
+                                type="text"
+                                name="applicantName"
+                                value={formData.applicantName}
+                                onChange={handleChange}
+                                placeholder="e.g. John Doe"
+                                disabled={submitting}
+                                autoComplete="name"
+                            />
+                        </label>
+
+                        <div className="field-grid">
+                            <label className="field">
+                                <span>Loan amount</span>
+                                <div className="input-prefix">
+                                    <span>₹</span>
+                                    <input
+                                        type="number"
+                                        name="loanAmount"
+                                        value={formData.loanAmount}
+                                        onChange={handleChange}
+                                        placeholder="500000"
+                                        min="1"
+                                        disabled={submitting}
+                                    />
+                                </div>
+                            </label>
+
+                            <label className="field">
+                                <span>Monthly income</span>
+                                <div className="input-prefix">
+                                    <span>₹</span>
+                                    <input
+                                        type="number"
+                                        name="monthlyIncome"
+                                        value={formData.monthlyIncome}
+                                        onChange={handleChange}
+                                        placeholder="80000"
+                                        min="1"
+                                        disabled={submitting}
+                                    />
+                                </div>
+                            </label>
+                        </div>
+
+                        <label className="field">
+                            <span>
+                                Credit score
+                                <small>300–900</small>
+                            </span>
+
+                            <input
+                                type="number"
+                                name="creditScore"
+                                value={formData.creditScore}
+                                onChange={handleChange}
+                                placeholder="750"
+                                min="300"
+                                max="900"
+                                disabled={submitting}
+                            />
+                        </label>
+
+                        {error && (
+                            <div className="form-error" role="alert">
+                                <span>!</span>
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            className="submit-button"
+                            disabled={submitting}
+                        >
+                            {submitting ? (
+                                <>
+                                    <span className="button-spinner" />
+                                    Processing application...
+                                </>
+                            ) : (
+                                <>
+                                    Submit application
+                                    <span>→</span>
+                                </>
+                            )}
+                        </button>
+
+                        <p className="form-disclaimer">
+                            Demo only. Do not enter real financial credentials
+                            or sensitive identity information.
+                        </p>
+                    </form>
+                </div>
+
+                <div className="application-side">
+                    <div className="workflow-card">
+                        <div className="workflow-header">
+                            <div>
+                                <span>CAMUNDA 8</span>
+                                <strong>Workflow status</strong>
+                            </div>
+
+                            <span className="workflow-live">
                                 <i />
-                                ONLINE
+                                LIVE
                             </span>
                         </div>
 
-                        <h3>Watch your application move.</h3>
-
-                        <div className="workflow-map">
-                            <div className="workflow-node active">
-                                <span>01</span>
+                        <div className="workflow-visual">
+                            <div className="workflow-item active">
+                                <span>1</span>
                                 <div>
-                                    <strong>Application</strong>
-                                    <small>Submitted</small>
+                                    <strong>Loan submitted</strong>
+                                    <small>Application received</small>
                                 </div>
                             </div>
 
-                            <div className="workflow-connector active" />
+                            <div className="workflow-line active" />
 
-                            <div className="workflow-node">
-                                <span>02</span>
+                            <div
+                                className={`workflow-item ${
+                                    status === "PROCESSING" ||
+                                    status === "APPROVED" ||
+                                    status === "REJECTED" ||
+                                    status === "REVIEW"
+                                        ? "active"
+                                        : ""
+                                }`}
+                            >
+                                <span>2</span>
                                 <div>
-                                    <strong>Risk analysis</strong>
-                                    <small>Automated</small>
+                                    <strong>Decision engine</strong>
+                                    <small>Business rules evaluated</small>
                                 </div>
                             </div>
 
-                            <div className="workflow-connector" />
+                            <div className="workflow-line active" />
 
-                            <div className="workflow-node">
-                                <span>03</span>
+                            <div
+                                className={`workflow-item ${
+                                    status !== "IDLE" ? "active" : ""
+                                }`}
+                            >
+                                <span>3</span>
                                 <div>
-                                    <strong>Decision</strong>
-                                    <small>Camunda 8</small>
-                                </div>
-                            </div>
-
-                            <div className="workflow-connector" />
-
-                            <div className="workflow-node">
-                                <span>04</span>
-                                <div>
-                                    <strong>Outcome</strong>
-                                    <small>Approved / Review / Reject</small>
+                                    <strong>Final outcome</strong>
+                                    <small>Application decision</small>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div className="workflow-engine">
-                            <span className="engine-pulse" />
-                            <div>
-                                <strong>Camunda Process Engine</strong>
-                                <small>
-                                    Orchestrating business process execution
-                                </small>
-                            </div>
-                            <span className="engine-arrow">→</span>
+                    <div className="demo-panel">
+                        <span className="demo-panel-icon">i</span>
+                        <div>
+                            <strong>Portfolio demonstration</strong>
+                            <p>
+                                No permanent customer database is used in this
+                                implementation. The backend uses an in-memory
+                                store to demonstrate workflow behavior.
+                            </p>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {error && (
-                    <div className="error-banner">
-                        <span>!</span>
+            {application && currentStatus && (
+                <div
+                    className={`application-result ${currentStatus.className}`}
+                    aria-live="polite"
+                >
+                    <div className="result-header">
+                        <div
+                            className={`result-icon ${currentStatus.className}`}
+                        >
+                            {currentStatus.icon}
+                        </div>
+
                         <div>
-                            <strong>Something went wrong</strong>
-                            <p>{error}</p>
-                        </div>
-                    </div>
-                )}
-
-                {currentStatus && application && (
-                    <div
-                        className={`result-card ${currentStatus.className}`}
-                    >
-                        <div className="result-icon">
-                            {status === "PROCESSING" ? (
-                                <span className="result-spinner" />
-                            ) : (
-                                currentStatus.icon
-                            )}
-                        </div>
-
-                        <div className="result-content">
-                            <span className="card-step">APPLICATION RESULT</span>
+                            <span className="result-label">
+                                APPLICATION OUTCOME
+                            </span>
                             <h3>{currentStatus.label}</h3>
                             <p>{currentStatus.description}</p>
+                        </div>
+                    </div>
 
-                            <div className="result-details">
-                                {application.applicationId && (
-                                    <div>
-                                        <span>Application ID</span>
-                                        <strong>
-                                            {application.applicationId}
-                                        </strong>
-                                    </div>
+                    <div className="result-grid">
+                        <div>
+                            <span>Application ID</span>
+                            <strong>
+                                {application.applicationId || "Pending"}
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Applicant</span>
+                            <strong>
+                                {application.applicantName ||
+                                    formData.applicantName}
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Loan amount</span>
+                            <strong>
+                                {formatCurrency(
+                                    application.loanAmount ??
+                                    formData.loanAmount
                                 )}
+                            </strong>
+                        </div>
 
-                                <div>
-                                    <span>Applicant</span>
-                                    <strong>
-                                        {application.applicantName ||
-                                            form.applicantName}
-                                    </strong>
-                                </div>
+                        <div>
+                            <span>Status</span>
+                            <strong>{currentStatus.label}</strong>
+                        </div>
+                    </div>
 
-                                {application.reviewedBy && (
-                                    <div>
-                                        <span>Reviewed by</span>
-                                        <strong>
-                                            {application.reviewedBy}
-                                        </strong>
-                                    </div>
-                                )}
+                    {application.reviewedBy && (
+                        <div className="review-details">
+                            <div>
+                                <span>Reviewed by</span>
+                                <strong>{application.reviewedBy}</strong>
                             </div>
 
                             {application.reviewComment && (
-                                <div className="review-comment">
-                                    <span>Reviewer comment</span>
-                                    <p>{application.reviewComment}</p>
+                                <div>
+                                    <span>Review comment</span>
+                                    <strong>
+                                        {application.reviewComment}
+                                    </strong>
                                 </div>
                             )}
-
-                            <div className="result-actions">
-                                {onViewApplications && (
-                                    <button
-                                        type="button"
-                                        className="secondary-button dark"
-                                        onClick={onViewApplications}
-                                    >
-                                        View applications
-                                        <span>→</span>
-                                    </button>
-                                )}
-
-                                {status !== "PROCESSING" && (
-                                    <button
-                                        type="button"
-                                        className="text-button"
-                                        onClick={resetForm}
-                                    >
-                                        Submit another application
-                                    </button>
-                                )}
-                            </div>
                         </div>
+                    )}
+
+                    <div className="result-actions">
+                        <button
+                            type="button"
+                            className="secondary-button dark"
+                            onClick={resetApplication}
+                        >
+                            New application
+                        </button>
+
+                        {onViewApplications && (
+                            <button
+                                type="button"
+                                className="primary-button"
+                                onClick={onViewApplications}
+                            >
+                                View applications
+                                <span>→</span>
+                            </button>
+                        )}
                     </div>
-                )}
-            </div>
-        </section>
+                </div>
+            )}
+        </div>
     );
 }
 
