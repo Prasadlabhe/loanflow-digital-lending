@@ -8,38 +8,29 @@ function App() {
 
     return (
         <div className="bank-app">
-
             <nav className="navbar">
                 <div className="navbar-inner">
-
-                    <div
-                        className="logo-section"
+                    <button
+                        type="button"
+                        className="brand"
                         onClick={() => setActivePage("apply")}
-                        style={{ cursor: "pointer" }}
+                        aria-label="Go to LoanFlow home"
                     >
-                        <div className="logo-mark">
-                            L
-                        </div>
+                        <span className="brand-mark">L</span>
 
-                        <div>
-                            <div className="logo-name">
-                                LoanFlow
-                            </div>
-
-                            <div className="logo-subtitle">
+                        <span className="brand-copy">
+                            <span className="brand-name">LoanFlow</span>
+                            <span className="brand-subtitle">
                                 Digital Lending
-                            </div>
-                        </div>
-                    </div>
+                            </span>
+                        </span>
+                    </button>
 
                     <div className="nav-right">
-
                         <button
                             type="button"
                             className={`nav-link ${
-                                activePage === "apply"
-                                    ? "active"
-                                    : ""
+                                activePage === "apply" ? "active" : ""
                             }`}
                             onClick={() => setActivePage("apply")}
                         >
@@ -49,55 +40,42 @@ function App() {
                         <button
                             type="button"
                             className={`nav-link ${
-                                activePage === "applications"
-                                    ? "active"
-                                    : ""
+                                activePage === "applications" ? "active" : ""
                             }`}
-                            onClick={() =>
-                                setActivePage("applications")
-                            }
+                            onClick={() => setActivePage("applications")}
                         >
                             Applications
                         </button>
 
                         <span className="secure-badge">
-                            🔒 Secure
+                            <span className="secure-dot" />
+                            Secure
                         </span>
-
                     </div>
-
                 </div>
             </nav>
 
             <main>
-
                 {activePage === "apply" && (
-                    <LoanApplication />
+                    <LoanApplication
+                        onViewApplications={() => setActivePage("applications")}
+                    />
                 )}
 
-                {activePage === "applications" && (
-                    <Applications />
-                )}
-
+                {activePage === "applications" && <Applications />}
             </main>
 
             <footer className="footer">
-
-                <div>
-                    © {new Date().getFullYear()} LoanFlow
-                </div>
+                <div>© {new Date().getFullYear()} LoanFlow</div>
 
                 <div className="footer-center">
-                    Digital Lending Platform
+                    Demo Digital Lending Platform
                 </div>
 
                 <div className="designer">
-                    Designed by
-                    <strong> Prasad Labhe</strong>
+                    Designed by <strong>Prasad Labhe</strong>
                 </div>
-
             </footer>
-
         </div>
     );
 }
