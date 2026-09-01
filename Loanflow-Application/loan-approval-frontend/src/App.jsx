@@ -16,12 +16,14 @@ function App() {
                         onClick={() => setActivePage("apply")}
                         aria-label="Go to LoanFlow home"
                     >
-                        <span className="brand-mark">L</span>
+                        <span className="brand-mark">
+                            <span>L</span>
+                        </span>
 
                         <span className="brand-copy">
                             <span className="brand-name">LoanFlow</span>
                             <span className="brand-subtitle">
-                                Digital Lending
+                                Intelligent Lending
                             </span>
                         </span>
                     </button>
@@ -34,7 +36,7 @@ function App() {
                             }`}
                             onClick={() => setActivePage("apply")}
                         >
-                            Apply for a Loan
+                            Apply
                         </button>
 
                         <button
@@ -49,7 +51,7 @@ function App() {
 
                         <span className="secure-badge">
                             <span className="secure-dot" />
-                            Secure
+                            Secure Demo
                         </span>
                     </div>
                 </div>
@@ -58,18 +60,24 @@ function App() {
             <main>
                 {activePage === "apply" && (
                     <LoanApplication
-                        onViewApplications={() => setActivePage("applications")}
+                        onViewApplications={() =>
+                            setActivePage("applications")
+                        }
                     />
                 )}
 
-                {activePage === "applications" && <Applications />}
+                {activePage === "applications" && (
+                    <Applications />
+                )}
             </main>
 
             <footer className="footer">
-                <div>© {new Date().getFullYear()} LoanFlow</div>
+                <div>
+                    © {new Date().getFullYear()} LoanFlow
+                </div>
 
                 <div className="footer-center">
-                    Demo Digital Lending Platform
+                    Intelligent Digital Lending Platform
                 </div>
 
                 <div className="designer">

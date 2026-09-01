@@ -46,12 +46,6 @@ function Applications() {
         }
     }, []);
 
-    /*
-     * Load applications when the Applications page opens.
-     *
-     * The request itself is asynchronous. The state updates happen
-     * after the API response is received.
-     */
     useEffect(() => {
         loadApplications(true);
     }, [loadApplications]);
@@ -173,16 +167,21 @@ function Applications() {
 
     return (
         <div className="dashboard-page">
-            {/* Dashboard Header */}
             <section className="dashboard-hero">
                 <div>
-                    <span className="eyebrow">LoanFlow Dashboard</span>
+                    <div className="ai-pill dashboard-pill">
+                        <span className="ai-spark">✦</span>
+                        Lending intelligence
+                    </div>
 
-                    <h1>Applications</h1>
+                    <h1>
+                        Application
+                        <span> center.</span>
+                    </h1>
 
                     <p>
-                        Monitor loan applications and view their current
-                        decision status.
+                        Monitor applications, decisions and workflow activity
+                        from one place.
                     </p>
                 </div>
 
@@ -192,25 +191,27 @@ function Applications() {
                     onClick={() => loadApplications(false)}
                     disabled={loading}
                 >
-                    {loading ? "Refreshing..." : "Refresh Applications"}
+                    <span className={loading ? "refresh-spin" : ""}>↻</span>
+                    {loading ? "Refreshing..." : "Refresh"}
                 </button>
             </section>
 
-            {/* Error */}
             {error && (
                 <div className="error-banner" role="alert">
-                    <span>{error}</span>
+                    <div>
+                        <span className="error-symbol">!</span>
+                        <span>{error}</span>
+                    </div>
 
                     <button
                         type="button"
                         onClick={() => loadApplications(false)}
                     >
-                        Try Again
+                        Try again
                     </button>
                 </div>
             )}
 
-            {/* Initial Loading */}
             {initialLoading ? (
                 <section className="loading-card">
                     <div className="loading-spinner" />
@@ -223,30 +224,48 @@ function Applications() {
                 </section>
             ) : (
                 <>
-                    {/* Statistics */}
+                    {/* STATS */}
                     <section className="statistics">
-                        <div className="stat-card">
-                            <span className="stat-label">Total</span>
+                        <div className="stat-card stat-total">
+                            <div className="stat-top">
+                                <span className="stat-label">
+                                    Total applications
+                                </span>
+
+                                <span className="stat-icon">◌</span>
+                            </div>
 
                             <strong>{totalApplications}</strong>
 
                             <span className="stat-description">
-                                Applications
+                                All submitted applications
                             </span>
                         </div>
 
-                        <div className="stat-card">
-                            <span className="stat-label">Processing</span>
+                        <div className="stat-card stat-processing">
+                            <div className="stat-top">
+                                <span className="stat-label">
+                                    Processing
+                                </span>
+
+                                <span className="stat-icon">◔</span>
+                            </div>
 
                             <strong>{processingApplications}</strong>
 
                             <span className="stat-description">
-                                In progress
+                                Currently in workflow
                             </span>
                         </div>
 
-                        <div className="stat-card">
-                            <span className="stat-label">Approved</span>
+                        <div className="stat-card stat-approved">
+                            <div className="stat-top">
+                                <span className="stat-label">
+                                    Approved
+                                </span>
+
+                                <span className="stat-icon">✓</span>
+                            </div>
 
                             <strong>{approvedApplications}</strong>
 
@@ -255,20 +274,30 @@ function Applications() {
                             </span>
                         </div>
 
-                        <div className="stat-card">
-                            <span className="stat-label">
-                                Manual Review
-                            </span>
+                        <div className="stat-card stat-review">
+                            <div className="stat-top">
+                                <span className="stat-label">
+                                    Manual review
+                                </span>
+
+                                <span className="stat-icon">!</span>
+                            </div>
 
                             <strong>{reviewApplications}</strong>
 
                             <span className="stat-description">
-                                Requires review
+                                Require human attention
                             </span>
                         </div>
 
-                        <div className="stat-card">
-                            <span className="stat-label">Rejected</span>
+                        <div className="stat-card stat-rejected">
+                            <div className="stat-top">
+                                <span className="stat-label">
+                                    Rejected
+                                </span>
+
+                                <span className="stat-icon">×</span>
+                            </div>
 
                             <strong>{rejectedApplications}</strong>
 
@@ -278,23 +307,35 @@ function Applications() {
                         </div>
                     </section>
 
-                    {/* Applications Table */}
+                    {/* TABLE */}
                     <section className="applications-card">
                         <div className="applications-card-header">
                             <div>
                                 <span className="eyebrow">
-                                    Lending Operations
+                                    Lending operations
                                 </span>
 
-                                <h2>Recent Applications</h2>
+                                <h2>Recent applications</h2>
+
+                                <p>
+                                    Track every application flowing through
+                                    the lending process.
+                                </p>
                             </div>
 
-                            <span className="application-count">
-                                {totalApplications}{" "}
-                                {totalApplications === 1
-                                    ? "application"
-                                    : "applications"}
-                            </span>
+                            <div className="applications-card-meta">
+                                <span className="online-indicator">
+                                    <span />
+                                    Workflow online
+                                </span>
+
+                                <span className="application-count">
+                                    {totalApplications}{" "}
+                                    {totalApplications === 1
+                                        ? "application"
+                                        : "applications"}
+                                </span>
+                            </div>
                         </div>
 
                         {applications.length === 0 ? (
@@ -315,8 +356,8 @@ function Applications() {
                                     <tr>
                                         <th>Application</th>
                                         <th>Applicant</th>
-                                        <th>Loan Amount</th>
-                                        <th>Credit Score</th>
+                                        <th>Loan amount</th>
+                                        <th>Credit score</th>
                                         <th>Status</th>
                                         <th>Submitted</th>
                                         <th />
@@ -340,23 +381,44 @@ function Applications() {
                                             </td>
 
                                             <td>
-                                                <strong>
-                                                    {
-                                                        application.applicantName
-                                                    }
+                                                <div className="applicant-cell">
+                                                        <span className="applicant-avatar">
+                                                            {(
+                                                                application.applicantName ||
+                                                                "A"
+                                                            )
+                                                                .charAt(0)
+                                                                .toUpperCase()}
+                                                        </span>
+
+                                                    <div>
+                                                        <strong>
+                                                            {
+                                                                application.applicantName
+                                                            }
+                                                        </strong>
+
+                                                        <span>
+                                                                Loan applicant
+                                                            </span>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <strong className="amount-cell">
+                                                    {formatCurrency(
+                                                        application.loanAmount
+                                                    )}
                                                 </strong>
                                             </td>
 
                                             <td>
-                                                {formatCurrency(
-                                                    application.loanAmount
-                                                )}
-                                            </td>
-
-                                            <td>
-                                                {
-                                                    application.creditScore
-                                                }
+                                                    <span className="credit-score">
+                                                        {
+                                                            application.creditScore
+                                                        }
+                                                    </span>
                                             </td>
 
                                             <td>
@@ -374,9 +436,11 @@ function Applications() {
                                             </td>
 
                                             <td>
-                                                {formatDate(
-                                                    application.createdAt
-                                                )}
+                                                    <span className="date-cell">
+                                                        {formatDate(
+                                                            application.createdAt
+                                                        )}
+                                                    </span>
                                             </td>
 
                                             <td>
@@ -390,6 +454,7 @@ function Applications() {
                                                     }
                                                 >
                                                     View
+                                                    <span>→</span>
                                                 </button>
                                             </td>
                                         </tr>
@@ -399,10 +464,64 @@ function Applications() {
                             </div>
                         )}
                     </section>
+
+                    {/* WORKFLOW PANEL */}
+                    <section className="workflow-panel">
+                        <div className="workflow-copy">
+                            <span className="eyebrow">
+                                Behind the experience
+                            </span>
+
+                            <h2>
+                                One application.
+                                <br />
+                                <span>One intelligent workflow.</span>
+                            </h2>
+
+                            <p>
+                                LoanFlow uses Camunda 8 to orchestrate the
+                                lending process from submission through final
+                                decision.
+                            </p>
+                        </div>
+
+                        <div className="workflow-steps">
+                            <div className="workflow-step">
+                                <span>01</span>
+
+                                <div>
+                                    <strong>Application</strong>
+                                    <small>Data captured</small>
+                                </div>
+                            </div>
+
+                            <div className="workflow-connector" />
+
+                            <div className="workflow-step">
+                                <span>02</span>
+
+                                <div>
+                                    <strong>Rules</strong>
+                                    <small>Eligibility evaluated</small>
+                                </div>
+                            </div>
+
+                            <div className="workflow-connector" />
+
+                            <div className="workflow-step">
+                                <span>03</span>
+
+                                <div>
+                                    <strong>Decision</strong>
+                                    <small>Outcome determined</small>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </>
             )}
 
-            {/* Application Details Modal */}
+            {/* MODAL */}
             {selectedApplication && (
                 <div
                     className="modal-backdrop"
@@ -419,7 +538,7 @@ function Applications() {
                         <div className="modal-header">
                             <div>
                                 <span className="eyebrow">
-                                    Application Details
+                                    Application details
                                 </span>
 
                                 <h2 id="application-modal-title">
@@ -464,7 +583,7 @@ function Applications() {
                             </div>
 
                             <div className="detail-item">
-                                <span>Loan Amount</span>
+                                <span>Loan amount</span>
 
                                 <strong>
                                     {formatCurrency(
@@ -474,7 +593,7 @@ function Applications() {
                             </div>
 
                             <div className="detail-item">
-                                <span>Monthly Income</span>
+                                <span>Monthly income</span>
 
                                 <strong>
                                     {formatCurrency(
@@ -484,7 +603,7 @@ function Applications() {
                             </div>
 
                             <div className="detail-item">
-                                <span>Credit Score</span>
+                                <span>Credit score</span>
 
                                 <strong>
                                     {selectedApplication.creditScore}
@@ -492,7 +611,7 @@ function Applications() {
                             </div>
 
                             <div className="detail-item">
-                                <span>Process Instance</span>
+                                <span>Process instance</span>
 
                                 <strong>
                                     {selectedApplication.processInstanceKey ||
@@ -501,7 +620,7 @@ function Applications() {
                             </div>
 
                             <div className="detail-item">
-                                <span>Reviewed At</span>
+                                <span>Reviewed at</span>
 
                                 <strong>
                                     {formatDate(
@@ -513,7 +632,7 @@ function Applications() {
 
                         {selectedApplication.reviewedBy && (
                             <div className="review-details">
-                                <span>Reviewed By</span>
+                                <span>Manual review</span>
 
                                 <strong>
                                     {selectedApplication.reviewedBy}

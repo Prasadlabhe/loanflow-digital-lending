@@ -2,21 +2,20 @@ import { useEffect, useRef, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const initialForm = {
-    applicantName: "",
-    loanAmount: "",
-    monthlyIncome: "",
-    creditScore: "",
-};
-
 function LoanApplication({ onViewApplications }) {
-    const [formData, setFormData] = useState(initialForm);
-    const [result, setResult] = useState(null);
+    const [formData, setFormData] = useState({
+        applicantName: "",
+        loanAmount: "",
+        monthlyIncome: "",
+        creditScore: "",
+    });
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [result, setResult] = useState(null);
 
-    const pollingTimeoutRef = useRef(null);
     const mountedRef = useRef(true);
+    const pollingTimeoutRef = useRef(null);
 
     useEffect(() => {
         return () => {
@@ -38,10 +37,6 @@ function LoanApplication({ onViewApplications }) {
     };
 
     const getApplicationStatus = async (applicationId) => {
-        if (!applicationId || !mountedRef.current) {
-            return;
-        }
-
         try {
             const response = await fetch(
                 `${API_URL}/api/loans/${applicationId}`
@@ -50,7 +45,9 @@ function LoanApplication({ onViewApplications }) {
             if (!response.ok) {
                 if (mountedRef.current) {
                     setError("Unable to retrieve application status.");
+                    setLoading(false);
                 }
+
                 return;
             }
 
@@ -60,22 +57,24 @@ function LoanApplication({ onViewApplications }) {
                 return;
             }
 
-            setResult(data);
-
             if (data.status === "PROCESSING") {
                 pollingTimeoutRef.current = setTimeout(() => {
                     getApplicationStatus(applicationId);
                 }, 1000);
-            } else {
-                setLoading(false);
+
+                return;
             }
+
+            setResult(data);
+            setLoading(false);
         } catch (requestError) {
-            console.error("STATUS ERROR:", requestError);
+            console.error("APPLICATION STATUS ERROR:", requestError);
 
             if (mountedRef.current) {
                 setError(
                     "Unable to connect to the lending service. Please try again."
                 );
+
                 setLoading(false);
             }
         }
@@ -88,14 +87,14 @@ function LoanApplication({ onViewApplications }) {
         setResult(null);
         setLoading(true);
 
-        const payload = {
-            applicantName: formData.applicantName.trim(),
-            loanAmount: Number(formData.loanAmount),
-            monthlyIncome: Number(formData.monthlyIncome),
-            creditScore: Number(formData.creditScore),
-        };
-
         try {
+            const payload = {
+                applicantName: formData.applicantName.trim(),
+                loanAmount: Number(formData.loanAmount),
+                monthlyIncome: Number(formData.monthlyIncome),
+                creditScore: Number(formData.creditScore),
+            };
+
             const response = await fetch(`${API_URL}/api/loans`, {
                 method: "POST",
                 headers: {
@@ -106,7 +105,7 @@ function LoanApplication({ onViewApplications }) {
 
             if (!response.ok) {
                 setError(
-                    "We could not submit your application. Please try again."
+                    "We couldn't submit your application. Please try again."
                 );
                 setLoading(false);
                 return;
@@ -114,42 +113,25 @@ function LoanApplication({ onViewApplications }) {
 
             const data = await response.json();
 
-            if (!mountedRef.current) {
-                return;
-            }
-
-            setResult(data);
-
-            if (data.applicationId && data.status === "PROCESSING") {
-                getApplicationStatus(data.applicationId);
+            if (data.applicationId) {
+                await getApplicationStatus(data.applicationId);
             } else {
+                setResult(data);
                 setLoading(false);
             }
         } catch (requestError) {
             console.error("SUBMIT LOAN ERROR:", requestError);
 
-            if (mountedRef.current) {
-                setError(
-                    "Unable to connect to the lending service. Please check that the backend is running."
-                );
-                setLoading(false);
-            }
+            setError(
+                "Unable to connect to the lending service. Please check that the backend is running."
+            );
+
+            setLoading(false);
         }
     };
 
-    const resetApplication = () => {
-        if (pollingTimeoutRef.current) {
-            clearTimeout(pollingTimeoutRef.current);
-        }
-
-        setFormData(initialForm);
-        setResult(null);
-        setError("");
-        setLoading(false);
-    };
-
-    const formatCurrency = (value) => {
-        if (value === undefined || value === null || value === "") {
+    const formatCurrency = (amount) => {
+        if (amount === null || amount === undefined) {
             return "—";
         }
 
@@ -157,182 +139,322 @@ function LoanApplication({ onViewApplications }) {
             style: "currency",
             currency: "INR",
             maximumFractionDigits: 0,
-        }).format(Number(value));
+        }).format(amount);
     };
 
-    const getStatusClass = (status) => {
-        switch (status) {
-            case "APPROVED":
-                return "approved";
-            case "REJECTED":
-                return "rejected";
-            case "REVIEW":
-                return "review";
-            default:
-                return "processing";
+    const getResultClass = () => {
+        if (!result) {
+            return "";
         }
+
+        if (result.status === "APPROVED") {
+            return "result-approved";
+        }
+
+        if (result.status === "REJECTED") {
+            return "result-rejected";
+        }
+
+        if (result.status === "REVIEW") {
+            return "result-review";
+        }
+
+        return "result-processing";
     };
 
-    const getStatusTitle = (status) => {
-        switch (status) {
-            case "APPROVED":
-                return "Loan Approved";
-            case "REJECTED":
-                return "Application Declined";
-            case "REVIEW":
-                return "Manual Review Required";
-            default:
-                return "Application Processing";
+    const getResultTitle = () => {
+        if (!result) {
+            return "";
         }
+
+        if (result.status === "APPROVED") {
+            return "Application approved";
+        }
+
+        if (result.status === "REJECTED") {
+            return "Application declined";
+        }
+
+        if (result.status === "REVIEW") {
+            return "Manual review required";
+        }
+
+        return "Application processing";
     };
 
-    const getStatusDescription = (status) => {
-        switch (status) {
-            case "APPROVED":
-                return "Your application has successfully passed the automated lending assessment.";
-            case "REJECTED":
-                return "Based on the configured lending rules, this application does not currently meet the approval criteria.";
-            case "REVIEW":
-                return "Your application has been routed for additional review before a final decision is made.";
-            default:
-                return "Our lending workflow is currently evaluating your application.";
+    const getResultDescription = () => {
+        if (!result) {
+            return "";
         }
+
+        if (result.status === "APPROVED") {
+            return "Your application successfully passed the automated lending decision workflow.";
+        }
+
+        if (result.status === "REJECTED") {
+            return "The lending decision workflow has completed and the application did not meet the configured approval criteria.";
+        }
+
+        if (result.status === "REVIEW") {
+            return "Your application has been routed for additional human review.";
+        }
+
+        return "Your application is currently being evaluated.";
     };
 
     return (
-        <>
+        <div className="loan-page">
+            {/* HERO */}
             <section className="hero">
+                <div className="hero-glow hero-glow-one" />
+                <div className="hero-glow hero-glow-two" />
+
                 <div className="hero-inner">
                     <div className="hero-content">
-                        <div className="eyebrow">
-                            <span className="eyebrow-dot" />
-                            DIGITAL LENDING
+                        <div className="ai-pill">
+                            <span className="ai-spark">✦</span>
+                            Intelligent lending orchestration
                         </div>
 
                         <h1>
-                            A smarter way to
-                            <span> borrow.</span>
+                            Lending decisions,
+                            <span> reimagined.</span>
                         </h1>
 
                         <p className="hero-description">
-                            Apply for a loan through a fast, intelligent
-                            digital lending experience powered by automated
-                            decisioning and workflow orchestration.
+                            A modern digital lending experience powered by
+                            intelligent business rules and automated process
+                            orchestration.
                         </p>
 
-                        <div className="hero-features">
-                            <div>
-                                <span className="feature-icon">✓</span>
-                                Fast digital application
-                            </div>
+                        <div className="hero-actions">
+                            <button
+                                type="button"
+                                className="primary-button hero-button"
+                                onClick={() =>
+                                    document
+                                        .getElementById("loan-application")
+                                        ?.scrollIntoView({
+                                            behavior: "smooth",
+                                        })
+                                }
+                            >
+                                Start an application
+                                <span>→</span>
+                            </button>
 
-                            <div>
-                                <span className="feature-icon">✓</span>
-                                Automated assessment
-                            </div>
-
-                            <div>
-                                <span className="feature-icon">✓</span>
-                                Secure workflow
-                            </div>
+                            <button
+                                type="button"
+                                className="text-button"
+                                onClick={onViewApplications}
+                            >
+                                View applications
+                            </button>
                         </div>
 
-                        <button
-                            type="button"
-                            className="hero-link"
-                            onClick={() =>
-                                document
-                                    .getElementById("loan-application")
-                                    ?.scrollIntoView({
-                                        behavior: "smooth",
-                                    })
-                            }
-                        >
-                            Start your application
-                            <span>→</span>
-                        </button>
+                        <div className="hero-trust">
+                            <div className="trust-item">
+                                <span className="trust-icon">✓</span>
+                                Automated decisions
+                            </div>
+
+                            <div className="trust-item">
+                                <span className="trust-icon">✓</span>
+                                Rule-driven workflow
+                            </div>
+
+                            <div className="trust-item">
+                                <span className="trust-icon">✓</span>
+                                Human review when needed
+                            </div>
+                        </div>
                     </div>
 
                     <div className="hero-art">
-                        <div className="hero-image">
+                        <div className="hero-image-wrapper">
                             <img
-                                src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1100&q=85"
-                                alt="Digital banking and payment"
+                                className="hero-image"
+                                src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=85"
+                                alt="Modern digital banking experience"
                             />
+
+                            <div className="hero-image-overlay" />
                         </div>
 
-                        <div className="hero-orb orb-one" />
-                        <div className="hero-orb orb-two" />
+                        <div className="ai-decision-card">
+                            <div className="decision-header">
+                                <div className="decision-icon">✦</div>
 
-                        <div className="hero-card hero-card-main">
-                            <div className="hero-card-top">
-                                <span>LOANFLOW</span>
-                                <span>•••• 4821</span>
+                                <div>
+                                    <span>Decision engine</span>
+                                    <strong>Active</strong>
+                                </div>
+
+                                <span className="live-dot" />
                             </div>
 
-                            <div className="hero-card-amount">
-                                ₹5,00,000
+                            <div className="decision-line">
+                                <span>Application analysis</span>
+                                <strong>Complete</strong>
                             </div>
 
-                            <div className="hero-card-bottom">
-                                <span>Digital Loan</span>
-                                <span className="card-status">
-                                    ● ACTIVE
-                                </span>
+                            <div className="decision-progress">
+                                <span />
                             </div>
-                        </div>
 
-                        <div className="hero-card-small">
-                            <span className="small-card-icon">✓</span>
-                            <div>
-                                <strong>Fast decisioning</strong>
-                                <span>Powered by workflow automation</span>
+                            <div className="decision-footer">
+                                <span>Powered by workflow orchestration</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section
-                className="main-container"
-                id="loan-application"
-            >
-                <div className="section-heading">
-                    <div>
-                        <span className="section-label">
-                            LOAN APPLICATION
-                        </span>
+            {/* SMARTER LENDING */}
+            <section className="smart-section">
+                <div className="section-heading centered">
+                    <span className="eyebrow">Smart lending</span>
 
-                        <h2>Tell us about yourself</h2>
+                    <h2>
+                        Smarter lending.
+                        <br />
+                        <span>Simplified.</span>
+                    </h2>
+
+                    <p>
+                        A streamlined lending experience backed by intelligent
+                        process automation.
+                    </p>
+                </div>
+
+                <div className="smart-grid">
+                    <div className="smart-card">
+                        <div className="smart-number">01</div>
+
+                        <div className="smart-icon">◎</div>
+
+                        <h3>Automated validation</h3>
 
                         <p>
-                            Enter a few details and we'll evaluate your
-                            application through the LoanFlow lending workflow.
+                            Application information is validated before
+                            entering the decision workflow.
                         </p>
+
+                        <div className="smart-line" />
                     </div>
 
-                    <div className="section-security">
-                        <span>🔒</span>
-                        <div>
-                            <strong>Your information is secure</strong>
-                            <small>Demo environment</small>
-                        </div>
+                    <div className="smart-card featured">
+                        <div className="smart-number">02</div>
+
+                        <div className="smart-icon">✦</div>
+
+                        <h3>Rule-driven decisions</h3>
+
+                        <p>
+                            Business rules evaluate applicant information and
+                            determine the appropriate lending path.
+                        </p>
+
+                        <div className="smart-line" />
+                    </div>
+
+                    <div className="smart-card">
+                        <div className="smart-number">03</div>
+
+                        <div className="smart-icon">↗</div>
+
+                        <h3>Human when needed</h3>
+
+                        <p>
+                            Exceptions can be routed to manual review instead
+                            of stopping the entire process.
+                        </p>
+
+                        <div className="smart-line" />
                     </div>
                 </div>
 
+                <div className="technology-strip">
+                    <span>Powered by</span>
+
+                    <strong>Camunda 8</strong>
+
+                    <i />
+
+                    <strong>Spring Boot</strong>
+
+                    <i />
+
+                    <strong>React</strong>
+                </div>
+            </section>
+
+            {/* APPLICATION */}
+            <section
+                className="application-section"
+                id="loan-application"
+            >
                 <div className="application-layout">
-                    <div className="application-card">
-                        <div className="card-top">
-                            <div className="card-icon">01</div>
+                    <div className="application-intro">
+                        <span className="eyebrow">
+                            Digital loan application
+                        </span>
+
+                        <h2>
+                            Make your next
+                            <span> move.</span>
+                        </h2>
+
+                        <p>
+                            Enter a few details and let the lending workflow
+                            take care of the rest.
+                        </p>
+
+                        <div className="application-benefits">
+                            <div>
+                                <span>01</span>
+                                <div>
+                                    <strong>Simple application</strong>
+                                    <p>Only the essentials.</p>
+                                </div>
+                            </div>
 
                             <div>
-                                <h3>Application details</h3>
-                                <p>Complete all fields to continue.</p>
+                                <span>02</span>
+                                <div>
+                                    <strong>Automated assessment</strong>
+                                    <p>Rules evaluate your application.</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span>03</span>
+                                <div>
+                                    <strong>Fast decision path</strong>
+                                    <p>Approved, declined or reviewed.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="application-card">
+                        <div className="form-header">
+                            <div>
+                                <span className="form-eyebrow">
+                                    LoanFlow
+                                </span>
+
+                                <h3>Start your application</h3>
+                            </div>
+
+                            <div className="form-lock">
+                                <span>●</span>
+                                Secure
                             </div>
                         </div>
 
                         <form onSubmit={submitLoan}>
-                            <div className="form-field">
+                            <div className="form-group">
                                 <label htmlFor="applicantName">
                                     Full name
                                 </label>
@@ -349,50 +471,50 @@ function LoanApplication({ onViewApplications }) {
                             </div>
 
                             <div className="form-row">
-                                <div className="form-field">
+                                <div className="form-group">
                                     <label htmlFor="loanAmount">
                                         Loan amount
                                     </label>
 
-                                    <div className="money-input">
+                                    <div className="input-prefix">
                                         <span>₹</span>
 
                                         <input
                                             id="loanAmount"
                                             name="loanAmount"
                                             type="number"
-                                            min="1"
                                             value={formData.loanAmount}
                                             onChange={handleChange}
                                             placeholder="500000"
+                                            min="1"
                                             required
                                         />
                                     </div>
                                 </div>
 
-                                <div className="form-field">
+                                <div className="form-group">
                                     <label htmlFor="monthlyIncome">
                                         Monthly income
                                     </label>
 
-                                    <div className="money-input">
+                                    <div className="input-prefix">
                                         <span>₹</span>
 
                                         <input
                                             id="monthlyIncome"
                                             name="monthlyIncome"
                                             type="number"
-                                            min="1"
                                             value={formData.monthlyIncome}
                                             onChange={handleChange}
                                             placeholder="80000"
+                                            min="1"
                                             required
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="form-field">
+                            <div className="form-group">
                                 <label htmlFor="creditScore">
                                     Credit score
                                 </label>
@@ -401,11 +523,11 @@ function LoanApplication({ onViewApplications }) {
                                     id="creditScore"
                                     name="creditScore"
                                     type="number"
-                                    min="300"
-                                    max="900"
                                     value={formData.creditScore}
                                     onChange={handleChange}
                                     placeholder="750"
+                                    min="300"
+                                    max="900"
                                     required
                                 />
 
@@ -415,7 +537,7 @@ function LoanApplication({ onViewApplications }) {
                             </div>
 
                             {error && (
-                                <div className="error-message">
+                                <div className="form-error" role="alert">
                                     <span>!</span>
                                     {error}
                                 </div>
@@ -423,12 +545,12 @@ function LoanApplication({ onViewApplications }) {
 
                             <button
                                 type="submit"
-                                className="apply-button"
+                                className="primary-button submit-button"
                                 disabled={loading}
                             >
                                 {loading ? (
                                     <>
-                                        <span className="spinner" />
+                                        <span className="button-spinner" />
                                         Processing application...
                                     </>
                                 ) : (
@@ -438,211 +560,135 @@ function LoanApplication({ onViewApplications }) {
                                     </>
                                 )}
                             </button>
+
+                            <p className="form-disclaimer">
+                                This is a portfolio demonstration. No
+                                application data is permanently stored.
+                            </p>
                         </form>
-
-                        <div className="demo-note">
-                            <span>ⓘ</span>
-                            This is a portfolio demonstration. Application
-                            data is stored only in memory and is not
-                            permanently persisted.
-                        </div>
                     </div>
-
-                    {!result ? (
-                        <div className="application-side">
-                            <div className="side-image">
-                                <img
-                                    src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=900&q=85"
-                                    alt="Modern financial consultation"
-                                />
-                            </div>
-
-                            <div className="side-content">
-                                <span className="section-label">
-                                    HOW IT WORKS
-                                </span>
-
-                                <h3>
-                                    Lending decisions, orchestrated
-                                    automatically.
-                                </h3>
-
-                                <div className="workflow-mini">
-                                    <div>
-                                        <span>01</span>
-                                        <p>Application submitted</p>
-                                    </div>
-
-                                    <div>
-                                        <span>02</span>
-                                        <p>Credit & fraud assessment</p>
-                                    </div>
-
-                                    <div>
-                                        <span>03</span>
-                                        <p>Automated decision</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div
-                            className={`result-card ${getStatusClass(
-                                result.status
-                            )}`}
-                        >
-                            <div className="result-icon">
-                                {result.status === "APPROVED" && "✓"}
-                                {result.status === "REJECTED" && "×"}
-                                {result.status === "REVIEW" && "!"}
-                                {result.status === "PROCESSING" && (
-                                    <span className="spinner dark" />
-                                )}
-                            </div>
-
-                            <span className="result-label">
-                                APPLICATION STATUS
-                            </span>
-
-                            <h3>{getStatusTitle(result.status)}</h3>
-
-                            <p>{getStatusDescription(result.status)}</p>
-
-                            {result.applicationId && (
-                                <div className="application-number">
-                                    <span>Application ID</span>
-                                    <strong>{result.applicationId}</strong>
-                                </div>
-                            )}
-
-                            <div className="result-details">
-                                <div>
-                                    <span>Applicant</span>
-                                    <strong>
-                                        {result.applicantName ||
-                                            formData.applicantName}
-                                    </strong>
-                                </div>
-
-                                <div>
-                                    <span>Loan amount</span>
-                                    <strong>
-                                        {formatCurrency(
-                                            result.loanAmount ||
-                                            formData.loanAmount
-                                        )}
-                                    </strong>
-                                </div>
-                            </div>
-
-                            {result.reviewedBy && (
-                                <div className="review-details">
-                                    <span>Reviewed by</span>
-                                    <strong>{result.reviewedBy}</strong>
-
-                                    {result.reviewComment && (
-                                        <p>{result.reviewComment}</p>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="workflow-status">
-                                <div className="workflow-line">
-                                    <span className="completed" />
-                                    <span
-                                        className={
-                                            result.status !== "PROCESSING"
-                                                ? "completed"
-                                                : "current"
-                                        }
-                                    />
-                                    <span
-                                        className={
-                                            result.status !== "PROCESSING"
-                                                ? "completed"
-                                                : ""
-                                        }
-                                    />
-                                </div>
-
-                                <div className="workflow-labels">
-                                    <span>Submitted</span>
-                                    <span>Evaluated</span>
-                                    <span>Decision</span>
-                                </div>
-                            </div>
-
-                            <div className="result-actions">
-                                <button
-                                    type="button"
-                                    className="secondary-button"
-                                    onClick={resetApplication}
-                                >
-                                    New application
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className="primary-button"
-                                    onClick={onViewApplications}
-                                >
-                                    View applications →
-                                </button>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </section>
 
+            {/* RESULT */}
+            {result && (
+                <section className="result-section">
+                    <div className={`result-card ${getResultClass()}`}>
+                        <div className="result-top">
+                            <div className="result-icon">
+                                {result.status === "APPROVED"
+                                    ? "✓"
+                                    : result.status === "REJECTED"
+                                        ? "×"
+                                        : "!"}
+                            </div>
+
+                            <div>
+                                <span className="eyebrow">
+                                    Lending decision
+                                </span>
+
+                                <h2>{getResultTitle()}</h2>
+                            </div>
+                        </div>
+
+                        <p className="result-description">
+                            {getResultDescription()}
+                        </p>
+
+                        <div className="result-details">
+                            <div>
+                                <span>Application ID</span>
+                                <strong>
+                                    #{result.applicationId}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>Applicant</span>
+                                <strong>
+                                    {result.applicantName}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>Loan amount</span>
+                                <strong>
+                                    {formatCurrency(result.loanAmount)}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>Status</span>
+                                <strong>{result.status}</strong>
+                            </div>
+                        </div>
+
+                        {result.reviewedBy && (
+                            <div className="review-note">
+                                <span>Manual review</span>
+
+                                <strong>
+                                    Reviewed by {result.reviewedBy}
+                                </strong>
+
+                                {result.reviewComment && (
+                                    <p>{result.reviewComment}</p>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="result-actions">
+                            <button
+                                type="button"
+                                className="secondary-button"
+                                onClick={onViewApplications}
+                            >
+                                View all applications
+                            </button>
+
+                            <button
+                                type="button"
+                                className="text-button"
+                                onClick={() => {
+                                    setResult(null);
+
+                                    window.scrollTo({
+                                        top: 0,
+                                        behavior: "smooth",
+                                    });
+                                }}
+                            >
+                                Start another application
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* FOOTER TRUST */}
             <section className="trust-section">
-                <div className="trust-inner">
-                    <div className="trust-copy">
-                        <span className="section-label">
-                            BUILT FOR DIGITAL BANKING
+                <div className="trust-content">
+                    <div>
+                        <span className="eyebrow">
+                            Built for modern lending
                         </span>
 
                         <h2>
-                            Designed around modern lending operations.
+                            Processes that move at
+                            <span> digital speed.</span>
                         </h2>
-
-                        <p>
-                            LoanFlow demonstrates how business process
-                            orchestration can connect applications,
-                            decisioning and automated workflow execution into
-                            one seamless lending journey.
-                        </p>
                     </div>
 
-                    <div className="trust-cards">
-                        <div className="trust-card">
-                            <strong>01</strong>
-                            <h3>Automated decisions</h3>
-                            <p>
-                                Business rules evaluate applications
-                                consistently.
-                            </p>
-                        </div>
-
-                        <div className="trust-card">
-                            <strong>02</strong>
-                            <h3>Workflow orchestration</h3>
-                            <p>
-                                Processes are coordinated through Camunda 8.
-                            </p>
-                        </div>
-
-                        <div className="trust-card">
-                            <strong>03</strong>
-                            <h3>Human review</h3>
-                            <p>
-                                Exceptions can be routed for manual
-                                assessment.
-                            </p>
-                        </div>
-                    </div>
+                    <p>
+                        LoanFlow demonstrates how modern applications can
+                        combine responsive interfaces, backend services,
+                        business rules and workflow orchestration into a
+                        single lending experience.
+                    </p>
                 </div>
             </section>
-        </>
+        </div>
     );
 }
 
