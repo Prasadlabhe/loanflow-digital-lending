@@ -1,48 +1,41 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8081";
 
 function Applications() {
     const [applications, setApplications] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [initialLoading, setInitialLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState("");
     const [selectedApplication, setSelectedApplication] = useState(null);
+    const [filter, setFilter] = useState("ALL");
 
-    const loadApplications = useCallback(async (isInitialLoad = false) => {
+    const loadApplications = useCallback(async (showLoader = false) => {
+        if (showLoader) {
+            setRefreshing(true);
+        }
+
         try {
-            if (isInitialLoad) {
-                setInitialLoading(true);
-            } else {
-                setLoading(true);
-            }
-
-            setError("");
-
             const response = await fetch(`${API_URL}/api/loans`);
 
             if (!response.ok) {
-                setError("Unable to load applications.");
-                return;
+                throw new Error("Unable to load applications.");
             }
 
             const data = await response.json();
 
             setApplications(Array.isArray(data) ? data : []);
+            setError("");
         } catch (requestError) {
-            console.error("LOAD APPLICATIONS ERROR:", requestError);
-
             setError(
-                "Unable to connect to the lending service. Please try again."
+                requestError.message ||
+                "Unable to load the application dashboard."
             );
         } finally {
-            if (isInitialLoad) {
-                setInitialLoading(false);
-            } else {
-                setLoading(false);
-            }
+            setLoading(false);
+            setRefreshing(false);
         }
     }, []);
 
@@ -50,73 +43,72 @@ function Applications() {
         loadApplications(true);
     }, [loadApplications]);
 
-    const viewApplication = async (applicationId) => {
-        try {
-            setError("");
+    const stats = useMemo(() => {
+        const total = applications.length;
+        const processing = applications.filter(
+            (application) => application.status === "PROCESSING"
+        ).length;
+        const approved = applications.filter(
+            (application) => application.status === "APPROVED"
+        ).length;
+        const review = applications.filter(
+            (application) => application.status === "REVIEW"
+        ).length;
+        const rejected = applications.filter(
+            (application) => application.status === "REJECTED"
+        ).length;
 
-            const response = await fetch(
-                `${API_URL}/api/loans/${applicationId}`
-            );
+        return {
+            total,
+            processing,
+            approved,
+            review,
+            rejected,
+        };
+    }, [applications]);
 
-            if (!response.ok) {
-                setError("Unable to retrieve application details.");
-                return;
-            }
-
-            const data = await response.json();
-
-            setSelectedApplication(data);
-        } catch (requestError) {
-            console.error("VIEW APPLICATION ERROR:", requestError);
-
-            setError("Unable to retrieve application details.");
+    const filteredApplications = useMemo(() => {
+        if (filter === "ALL") {
+            return applications;
         }
-    };
 
-    const closeApplication = () => {
-        setSelectedApplication(null);
-    };
-
-    const getStatusClass = (status) => {
-        switch (status) {
-            case "APPROVED":
-                return "status-approved";
-
-            case "REJECTED":
-                return "status-rejected";
-
-            case "REVIEW":
-                return "status-review";
-
-            case "PROCESSING":
-                return "status-processing";
-
-            default:
-                return "status-processing";
-        }
-    };
+        return applications.filter(
+            (application) => application.status === filter
+        );
+    }, [applications, filter]);
 
     const getStatusLabel = (status) => {
         switch (status) {
             case "APPROVED":
                 return "Approved";
-
             case "REJECTED":
                 return "Rejected";
-
             case "REVIEW":
-                return "Manual Review";
-
+                return "Manual review";
             case "PROCESSING":
                 return "Processing";
-
             default:
                 return status || "Unknown";
         }
     };
 
-    const formatCurrency = (amount) => {
-        if (amount === null || amount === undefined) {
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case "APPROVED":
+                return "✓";
+            case "REJECTED":
+                return "×";
+            case "REVIEW":
+                return "◎";
+            case "PROCESSING":
+                return "◌";
+            default:
+                return "•";
+        }
+    };
+
+    const formatAmount = (amount) => {
+        if (amount === undefined || amount === null || amount === "") {
             return "—";
         }
 
@@ -124,233 +116,206 @@ function Applications() {
             style: "currency",
             currency: "INR",
             maximumFractionDigits: 0,
-        }).format(amount);
+        }).format(Number(amount));
     };
 
     const formatDate = (dateValue) => {
         if (!dateValue) {
-            return "—";
+            return "Recently";
         }
 
         const date = new Date(dateValue);
 
         if (Number.isNaN(date.getTime())) {
-            return "—";
+            return "Recently";
         }
 
-        return date.toLocaleString("en-IN", {
+        return date.toLocaleDateString("en-IN", {
             day: "2-digit",
             month: "short",
             year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
         });
     };
 
-    const totalApplications = applications.length;
-
-    const approvedApplications = applications.filter(
-        (application) => application.status === "APPROVED"
-    ).length;
-
-    const rejectedApplications = applications.filter(
-        (application) => application.status === "REJECTED"
-    ).length;
-
-    const reviewApplications = applications.filter(
-        (application) => application.status === "REVIEW"
-    ).length;
-
-    const processingApplications = applications.filter(
-        (application) => application.status === "PROCESSING"
-    ).length;
-
     return (
-        <div className="dashboard-page">
-            <section className="dashboard-hero">
-                <div>
-                    <div className="ai-pill dashboard-pill">
-                        <span className="ai-spark">✦</span>
-                        Lending intelligence
-                    </div>
-
-                    <h1>
-                        Application
-                        <span> center.</span>
-                    </h1>
-
-                    <p>
-                        Monitor applications, decisions and workflow activity
-                        from one place.
-                    </p>
-                </div>
-
-                <button
-                    type="button"
-                    className="refresh-button"
-                    onClick={() => loadApplications(false)}
-                    disabled={loading}
-                >
-                    <span className={loading ? "refresh-spin" : ""}>↻</span>
-                    {loading ? "Refreshing..." : "Refresh"}
-                </button>
-            </section>
-
-            {error && (
-                <div className="error-banner" role="alert">
+        <main className="dashboard-page">
+            <div className="dashboard-shell">
+                <div className="dashboard-header">
                     <div>
-                        <span className="error-symbol">!</span>
-                        <span>{error}</span>
+                        <span className="section-kicker">
+                            LOANFLOW OPERATIONS
+                        </span>
+                        <h1>Application intelligence.</h1>
+                        <p>
+                            Monitor every loan application moving through the
+                            Camunda workflow.
+                        </p>
                     </div>
 
                     <button
                         type="button"
-                        onClick={() => loadApplications(false)}
+                        className="refresh-button"
+                        onClick={() => loadApplications(true)}
+                        disabled={refreshing}
                     >
-                        Try again
+                        <span className={refreshing ? "spin" : ""}>↻</span>
+                        Refresh
                     </button>
                 </div>
-            )}
 
-            {initialLoading ? (
-                <section className="loading-card">
-                    <div className="loading-spinner" />
+                <div className="dashboard-live-bar">
+                    <div>
+                        <span className="live-indicator">
+                            <i />
+                            WORKFLOW ENGINE
+                        </span>
+                        <strong>Camunda 8 connected</strong>
+                    </div>
 
-                    <h3>Loading applications</h3>
+                    <div className="live-bar-right">
+                        <span>In-memory demo environment</span>
+                        <span className="live-dot" />
+                    </div>
+                </div>
 
-                    <p>
-                        Connecting to the LoanFlow lending service...
-                    </p>
+                <section className="statistics">
+                    <button
+                        type="button"
+                        className={`stat-card ${
+                            filter === "ALL" ? "selected" : ""
+                        }`}
+                        onClick={() => setFilter("ALL")}
+                    >
+                        <div className="stat-card-top">
+                            <span>Total applications</span>
+                            <span className="stat-icon">Σ</span>
+                        </div>
+                        <strong>{stats.total}</strong>
+                        <small>All applications</small>
+                    </button>
+
+                    <button
+                        type="button"
+                        className={`stat-card ${
+                            filter === "PROCESSING" ? "selected" : ""
+                        }`}
+                        onClick={() => setFilter("PROCESSING")}
+                    >
+                        <div className="stat-card-top">
+                            <span>Processing</span>
+                            <span className="stat-icon processing-icon">
+                                ◌
+                            </span>
+                        </div>
+                        <strong>{stats.processing}</strong>
+                        <small>Workflow active</small>
+                    </button>
+
+                    <button
+                        type="button"
+                        className={`stat-card ${
+                            filter === "APPROVED" ? "selected" : ""
+                        }`}
+                        onClick={() => setFilter("APPROVED")}
+                    >
+                        <div className="stat-card-top">
+                            <span>Approved</span>
+                            <span className="stat-icon approved-icon">✓</span>
+                        </div>
+                        <strong>{stats.approved}</strong>
+                        <small>Positive outcome</small>
+                    </button>
+
+                    <button
+                        type="button"
+                        className={`stat-card ${
+                            filter === "REVIEW" ? "selected" : ""
+                        }`}
+                        onClick={() => setFilter("REVIEW")}
+                    >
+                        <div className="stat-card-top">
+                            <span>Manual review</span>
+                            <span className="stat-icon review-icon">◎</span>
+                        </div>
+                        <strong>{stats.review}</strong>
+                        <small>Human decision</small>
+                    </button>
+
+                    <button
+                        type="button"
+                        className={`stat-card ${
+                            filter === "REJECTED" ? "selected" : ""
+                        }`}
+                        onClick={() => setFilter("REJECTED")}
+                    >
+                        <div className="stat-card-top">
+                            <span>Rejected</span>
+                            <span className="stat-icon rejected-icon">×</span>
+                        </div>
+                        <strong>{stats.rejected}</strong>
+                        <small>Negative outcome</small>
+                    </button>
                 </section>
-            ) : (
-                <>
-                    {/* STATS */}
-                    <section className="statistics">
-                        <div className="stat-card stat-total">
-                            <div className="stat-top">
-                                <span className="stat-label">
-                                    Total applications
-                                </span>
 
-                                <span className="stat-icon">◌</span>
-                            </div>
-
-                            <strong>{totalApplications}</strong>
-
-                            <span className="stat-description">
-                                All submitted applications
+                <section className="dashboard-main-card">
+                    <div className="applications-toolbar">
+                        <div>
+                            <span className="card-step">
+                                LIVE APPLICATION STREAM
                             </span>
+                            <h2>
+                                Recent applications
+                                <span>{filteredApplications.length}</span>
+                            </h2>
                         </div>
 
-                        <div className="stat-card stat-processing">
-                            <div className="stat-top">
-                                <span className="stat-label">
-                                    Processing
-                                </span>
-
-                                <span className="stat-icon">◔</span>
-                            </div>
-
-                            <strong>{processingApplications}</strong>
-
-                            <span className="stat-description">
-                                Currently in workflow
-                            </span>
+                        <div className="filter-pills">
+                            {[
+                                ["ALL", "All"],
+                                ["PROCESSING", "Processing"],
+                                ["APPROVED", "Approved"],
+                                ["REVIEW", "Review"],
+                                ["REJECTED", "Rejected"],
+                            ].map(([value, label]) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    className={filter === value ? "active" : ""}
+                                    onClick={() => setFilter(value)}
+                                >
+                                    {label}
+                                </button>
+                            ))}
                         </div>
+                    </div>
 
-                        <div className="stat-card stat-approved">
-                            <div className="stat-top">
-                                <span className="stat-label">
-                                    Approved
-                                </span>
-
-                                <span className="stat-icon">✓</span>
-                            </div>
-
-                            <strong>{approvedApplications}</strong>
-
-                            <span className="stat-description">
-                                Successfully approved
-                            </span>
+                    {error && (
+                        <div className="dashboard-error">
+                            <span>!</span>
+                            {error}
                         </div>
+                    )}
 
-                        <div className="stat-card stat-review">
-                            <div className="stat-top">
-                                <span className="stat-label">
-                                    Manual review
-                                </span>
-
-                                <span className="stat-icon">!</span>
-                            </div>
-
-                            <strong>{reviewApplications}</strong>
-
-                            <span className="stat-description">
-                                Require human attention
-                            </span>
+                    {loading ? (
+                        <div className="dashboard-loading">
+                            <span className="loading-orbit" />
+                            <strong>Loading applications...</strong>
+                            <small>
+                                Connecting to the LoanFlow API
+                            </small>
                         </div>
-
-                        <div className="stat-card stat-rejected">
-                            <div className="stat-top">
-                                <span className="stat-label">
-                                    Rejected
-                                </span>
-
-                                <span className="stat-icon">×</span>
-                            </div>
-
-                            <strong>{rejectedApplications}</strong>
-
-                            <span className="stat-description">
-                                Applications declined
-                            </span>
+                    ) : filteredApplications.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-icon">◌</div>
+                            <h3>No applications yet</h3>
+                            <p>
+                                Submit a loan application and its workflow
+                                status will appear here.
+                            </p>
                         </div>
-                    </section>
-
-                    {/* TABLE */}
-                    <section className="applications-card">
-                        <div className="applications-card-header">
-                            <div>
-                                <span className="eyebrow">
-                                    Lending operations
-                                </span>
-
-                                <h2>Recent applications</h2>
-
-                                <p>
-                                    Track every application flowing through
-                                    the lending process.
-                                </p>
-                            </div>
-
-                            <div className="applications-card-meta">
-                                <span className="online-indicator">
-                                    <span />
-                                    Workflow online
-                                </span>
-
-                                <span className="application-count">
-                                    {totalApplications}{" "}
-                                    {totalApplications === 1
-                                        ? "application"
-                                        : "applications"}
-                                </span>
-                            </div>
-                        </div>
-
-                        {applications.length === 0 ? (
-                            <div className="empty-state">
-                                <div className="empty-icon">L</div>
-
-                                <h3>No applications yet</h3>
-
-                                <p>
-                                    Submitted loan applications will appear
-                                    here.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="table-wrapper">
+                    ) : (
+                        <>
+                            <div className="applications-table-wrap">
                                 <table className="applications-table">
                                     <thead>
                                     <tr>
@@ -359,200 +324,213 @@ function Applications() {
                                         <th>Loan amount</th>
                                         <th>Credit score</th>
                                         <th>Status</th>
-                                        <th>Submitted</th>
-                                        <th />
+                                        <th>Action</th>
                                     </tr>
                                     </thead>
 
                                     <tbody>
-                                    {applications.map((application) => (
-                                        <tr
-                                            key={
-                                                application.applicationId
-                                            }
-                                        >
-                                            <td>
-                                                    <span className="application-id">
-                                                        #
-                                                        {
-                                                            application.applicationId
-                                                        }
-                                                    </span>
-                                            </td>
+                                    {filteredApplications.map(
+                                        (application) => (
+                                            <tr
+                                                key={
+                                                    application.applicationId ||
+                                                    application.processInstanceKey
+                                                }
+                                            >
+                                                <td>
+                                                    <div className="application-id">
+                                                            <span>
+                                                                {getStatusIcon(
+                                                                    application.status
+                                                                )}
+                                                            </span>
+                                                        <div>
+                                                            <strong>
+                                                                {application.applicationId ||
+                                                                    "—"}
+                                                            </strong>
+                                                            <small>
+                                                                {formatDate(
+                                                                    application.reviewedAt
+                                                                )}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </td>
 
-                                            <td>
-                                                <div className="applicant-cell">
-                                                        <span className="applicant-avatar">
-                                                            {(
-                                                                application.applicantName ||
-                                                                "A"
-                                                            )
-                                                                .charAt(0)
-                                                                .toUpperCase()}
-                                                        </span>
+                                                <td>
+                                                    <strong>
+                                                        {application.applicantName ||
+                                                            "Unknown"}
+                                                    </strong>
+                                                </td>
 
-                                                    <div>
+                                                <td>
+                                                    <strong>
+                                                        {formatAmount(
+                                                            application.loanAmount
+                                                        )}
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    <div className="credit-score">
                                                         <strong>
-                                                            {
-                                                                application.applicantName
-                                                            }
+                                                            {application.creditScore ||
+                                                                "—"}
                                                         </strong>
-
                                                         <span>
-                                                                Loan applicant
+                                                                {application.creditScore >=
+                                                                750
+                                                                    ? "Strong"
+                                                                    : application.creditScore >=
+                                                                    650
+                                                                        ? "Fair"
+                                                                        : "Low"}
                                                             </span>
                                                     </div>
-                                                </div>
-                                            </td>
+                                                </td>
 
-                                            <td>
-                                                <strong className="amount-cell">
-                                                    {formatCurrency(
-                                                        application.loanAmount
-                                                    )}
-                                                </strong>
-                                            </td>
+                                                <td>
+                                                        <span
+                                                            className={`status-pill ${String(
+                                                                application.status ||
+                                                                ""
+                                                            ).toLowerCase()}`}
+                                                        >
+                                                            <i>
+                                                                {getStatusIcon(
+                                                                    application.status
+                                                                )}
+                                                            </i>
+                                                            {getStatusLabel(
+                                                                application.status
+                                                            )}
+                                                        </span>
+                                                </td>
 
-                                            <td>
-                                                    <span className="credit-score">
-                                                        {
-                                                            application.creditScore
+                                                <td>
+                                                    <button
+                                                        type="button"
+                                                        className="view-button"
+                                                        onClick={() =>
+                                                            setSelectedApplication(
+                                                                application
+                                                            )
                                                         }
-                                                    </span>
-                                            </td>
-
-                                            <td>
-                                                    <span
-                                                        className={`status-badge ${getStatusClass(
-                                                            application.status
-                                                        )}`}
                                                     >
-                                                        <span className="status-dot" />
-
-                                                        {getStatusLabel(
-                                                            application.status
-                                                        )}
-                                                    </span>
-                                            </td>
-
-                                            <td>
-                                                    <span className="date-cell">
-                                                        {formatDate(
-                                                            application.createdAt
-                                                        )}
-                                                    </span>
-                                            </td>
-
-                                            <td>
-                                                <button
-                                                    type="button"
-                                                    className="view-button"
-                                                    onClick={() =>
-                                                        viewApplication(
-                                                            application.applicationId
-                                                        )
-                                                    }
-                                                >
-                                                    View
-                                                    <span>→</span>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                        View
+                                                        <span>→</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    )}
                                     </tbody>
                                 </table>
                             </div>
-                        )}
-                    </section>
 
-                    {/* WORKFLOW PANEL */}
-                    <section className="workflow-panel">
-                        <div className="workflow-copy">
-                            <span className="eyebrow">
-                                Behind the experience
-                            </span>
+                            <div className="mobile-application-list">
+                                {filteredApplications.map((application) => (
+                                    <button
+                                        type="button"
+                                        className="mobile-application-card"
+                                        key={
+                                            application.applicationId ||
+                                            application.processInstanceKey
+                                        }
+                                        onClick={() =>
+                                            setSelectedApplication(application)
+                                        }
+                                    >
+                                        <div className="mobile-card-top">
+                                            <strong>
+                                                {application.applicantName ||
+                                                    "Unknown"}
+                                            </strong>
 
-                            <h2>
-                                One application.
-                                <br />
-                                <span>One intelligent workflow.</span>
-                            </h2>
+                                            <span
+                                                className={`status-pill ${String(
+                                                    application.status || ""
+                                                ).toLowerCase()}`}
+                                            >
+                                                {getStatusLabel(
+                                                    application.status
+                                                )}
+                                            </span>
+                                        </div>
 
-                            <p>
-                                LoanFlow uses Camunda 8 to orchestrate the
-                                lending process from submission through final
-                                decision.
-                            </p>
-                        </div>
+                                        <div className="mobile-card-details">
+                                            <div>
+                                                <span>Application</span>
+                                                <strong>
+                                                    {application.applicationId ||
+                                                        "—"}
+                                                </strong>
+                                            </div>
 
-                        <div className="workflow-steps">
-                            <div className="workflow-step">
-                                <span>01</span>
+                                            <div>
+                                                <span>Amount</span>
+                                                <strong>
+                                                    {formatAmount(
+                                                        application.loanAmount
+                                                    )}
+                                                </strong>
+                                            </div>
 
-                                <div>
-                                    <strong>Application</strong>
-                                    <small>Data captured</small>
-                                </div>
+                                            <div>
+                                                <span>Score</span>
+                                                <strong>
+                                                    {application.creditScore ||
+                                                        "—"}
+                                                </strong>
+                                            </div>
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
+                        </>
+                    )}
+                </section>
 
-                            <div className="workflow-connector" />
+                <div className="dashboard-note">
+                    <span>i</span>
+                    <p>
+                        <strong>Portfolio demonstration:</strong> Application
+                        data is stored only in memory and is not permanently
+                        persisted.
+                    </p>
+                </div>
+            </div>
 
-                            <div className="workflow-step">
-                                <span>02</span>
-
-                                <div>
-                                    <strong>Rules</strong>
-                                    <small>Eligibility evaluated</small>
-                                </div>
-                            </div>
-
-                            <div className="workflow-connector" />
-
-                            <div className="workflow-step">
-                                <span>03</span>
-
-                                <div>
-                                    <strong>Decision</strong>
-                                    <small>Outcome determined</small>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </>
-            )}
-
-            {/* MODAL */}
             {selectedApplication && (
                 <div
-                    className="modal-backdrop"
-                    onClick={closeApplication}
+                    className="application-modal-backdrop"
                     role="presentation"
+                    onClick={() => setSelectedApplication(null)}
                 >
                     <div
                         className="application-modal"
-                        onClick={(event) => event.stopPropagation()}
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="application-modal-title"
+                        onClick={(event) => event.stopPropagation()}
                     >
                         <div className="modal-header">
                             <div>
-                                <span className="eyebrow">
-                                    Application details
+                                <span className="card-step">
+                                    APPLICATION DETAILS
                                 </span>
-
                                 <h2 id="application-modal-title">
-                                    #
-                                    {
-                                        selectedApplication.applicationId
-                                    }
+                                    {selectedApplication.applicationId ||
+                                        "Application"}
                                 </h2>
                             </div>
 
                             <button
                                 type="button"
                                 className="modal-close"
-                                onClick={closeApplication}
+                                onClick={() => setSelectedApplication(null)}
                                 aria-label="Close application details"
                             >
                                 ×
@@ -561,106 +539,75 @@ function Applications() {
 
                         <div className="modal-status">
                             <span
-                                className={`status-badge ${getStatusClass(
-                                    selectedApplication.status
-                                )}`}
+                                className={`status-pill ${String(
+                                    selectedApplication.status || ""
+                                ).toLowerCase()}`}
                             >
-                                <span className="status-dot" />
-
-                                {getStatusLabel(
-                                    selectedApplication.status
-                                )}
+                                {getStatusIcon(selectedApplication.status)}
+                                {getStatusLabel(selectedApplication.status)}
                             </span>
                         </div>
 
-                        <div className="details-grid">
-                            <div className="detail-item">
+                        <div className="modal-grid">
+                            <div>
                                 <span>Applicant</span>
-
                                 <strong>
-                                    {selectedApplication.applicantName}
+                                    {selectedApplication.applicantName ||
+                                        "—"}
                                 </strong>
                             </div>
 
-                            <div className="detail-item">
+                            <div>
                                 <span>Loan amount</span>
-
                                 <strong>
-                                    {formatCurrency(
+                                    {formatAmount(
                                         selectedApplication.loanAmount
                                     )}
                                 </strong>
                             </div>
 
-                            <div className="detail-item">
+                            <div>
                                 <span>Monthly income</span>
-
                                 <strong>
-                                    {formatCurrency(
+                                    {formatAmount(
                                         selectedApplication.monthlyIncome
                                     )}
                                 </strong>
                             </div>
 
-                            <div className="detail-item">
+                            <div>
                                 <span>Credit score</span>
-
                                 <strong>
-                                    {selectedApplication.creditScore}
+                                    {selectedApplication.creditScore || "—"}
                                 </strong>
                             </div>
 
-                            <div className="detail-item">
+                            <div>
                                 <span>Process instance</span>
-
                                 <strong>
                                     {selectedApplication.processInstanceKey ||
                                         "—"}
                                 </strong>
                             </div>
 
-                            <div className="detail-item">
-                                <span>Reviewed at</span>
-
+                            <div>
+                                <span>Reviewed by</span>
                                 <strong>
-                                    {formatDate(
-                                        selectedApplication.reviewedAt
-                                    )}
+                                    {selectedApplication.reviewedBy || "—"}
                                 </strong>
                             </div>
                         </div>
 
-                        {selectedApplication.reviewedBy && (
-                            <div className="review-details">
-                                <span>Manual review</span>
-
-                                <strong>
-                                    {selectedApplication.reviewedBy}
-                                </strong>
-
-                                {selectedApplication.reviewComment && (
-                                    <p>
-                                        {
-                                            selectedApplication.reviewComment
-                                        }
-                                    </p>
-                                )}
+                        {selectedApplication.reviewComment && (
+                            <div className="modal-comment">
+                                <span>Review comment</span>
+                                <p>{selectedApplication.reviewComment}</p>
                             </div>
                         )}
-
-                        <div className="modal-footer">
-                            <button
-                                type="button"
-                                className="secondary-button"
-                                onClick={closeApplication}
-                            >
-                                Close
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}
-        </div>
+        </main>
     );
 }
 
