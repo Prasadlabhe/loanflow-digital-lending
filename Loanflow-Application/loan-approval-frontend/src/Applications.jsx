@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -95,16 +96,67 @@ function Applications() {
     };
 
     // ==============================
-    // LOAD APPLICATIONS ON PAGE LOAD
+    // INITIAL LOAD
     // ==============================
 
     useEffect(() => {
 
-        const timer = setTimeout(() => {
-            loadApplications();
-        }, 0);
+        let cancelled = false;
 
-        return () => clearTimeout(timer);
+        const fetchApplications = async () => {
+
+            try {
+
+                const response = await fetch(
+                    `${API_URL}/api/loans`
+                );
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Failed to fetch applications"
+                    );
+
+                }
+
+                const data = await response.json();
+
+                if (!cancelled) {
+
+                    setApplications(data);
+                    setError("");
+                    setLoading(false);
+
+                }
+
+            } catch (error) {
+
+                if (!cancelled) {
+
+                    console.error(
+                        "LOAD APPLICATIONS ERROR:",
+                        error
+                    );
+
+                    setError(
+                        "Unable to load applications."
+                    );
+
+                    setLoading(false);
+
+                }
+
+            }
+
+        };
+
+        fetchApplications();
+
+        return () => {
+
+            cancelled = true;
+
+        };
 
     }, []);
 
@@ -149,7 +201,9 @@ function Applications() {
     const formatDate = (date) => {
 
         if (!date) {
+
             return "Not reviewed";
+
         }
 
         return new Date(date).toLocaleString(
@@ -159,6 +213,7 @@ function Applications() {
                 timeStyle: "short"
             }
         );
+
     };
 
     // ==============================
@@ -422,8 +477,7 @@ function Applications() {
 
                             <strong
                                 className={`status ${
-    selectedApplication.status
-        ?.toLowerCase()
+    selectedApplication.status?.toLowerCase()
 }`}
                             >
                                 {selectedApplication.status}
@@ -540,7 +594,9 @@ function Applications() {
                 {applications.length === 0 ? (
 
                     <div className="empty-state">
+
                         No loan applications found.
+
                     </div>
 
                 ) : (
@@ -551,127 +607,126 @@ function Applications() {
 
                             <thead>
 
-                            <tr>
+                                <tr>
 
-                                <th>
-                                    Application ID
-                                </th>
+                                    <th>
+                                        Application ID
+                                    </th>
 
-                                <th>
-                                    Applicant
-                                </th>
+                                    <th>
+                                        Applicant
+                                    </th>
 
-                                <th>
-                                    Loan Amount
-                                </th>
+                                    <th>
+                                        Loan Amount
+                                    </th>
 
-                                <th>
-                                    Income
-                                </th>
+                                    <th>
+                                        Income
+                                    </th>
 
-                                <th>
-                                    Credit Score
-                                </th>
+                                    <th>
+                                        Credit Score
+                                    </th>
 
-                                <th>
-                                    Status
-                                </th>
+                                    <th>
+                                        Status
+                                    </th>
 
-                                <th>
-                                    Action
-                                </th>
+                                    <th>
+                                        Action
+                                    </th>
 
-                            </tr>
+                                </tr>
 
                             </thead>
 
                             <tbody>
 
-                            {applications.map(
-                                application => (
+                                {applications.map(
+                                    application => (
 
-                                    <tr
-                                        key={
-                                            application.applicationId
-                                        }
-                                    >
-
-                                        <td className="application-id">
-
-                                            {
+                                        <tr
+                                            key={
                                                 application.applicationId
                                             }
+                                        >
 
-                                        </td>
+                                            <td className="application-id">
 
-                                        <td>
-
-                                            {
-                                                application.applicantName
-                                            }
-
-                                        </td>
-
-                                        <td>
-
-                                            ₹
-                                            {formatCurrency(
-                                                application.loanAmount
-                                            )}
-
-                                        </td>
-
-                                        <td>
-
-                                            ₹
-                                            {formatCurrency(
-                                                application.monthlyIncome
-                                            )}
-
-                                        </td>
-
-                                        <td>
-
-                                            {
-                                                application.creditScore
-                                            }
-
-                                        </td>
-
-                                        <td>
-
-                                            <span
-                                                className={`status ${
-    application.status
-        ?.toLowerCase()
-}`}
-                                            >
                                                 {
-                                                    application.status
+                                                    application.applicationId
                                                 }
-                                            </span>
 
-                                        </td>
+                                            </td>
 
-                                        <td>
+                                            <td>
 
-                                            <button
-                                                className="view-button"
-                                                onClick={() =>
-                                                    viewApplication(
-                                                        application.applicationId
-                                                    )
+                                                {
+                                                    application.applicantName
                                                 }
-                                            >
-                                                View Details →
-                                            </button>
 
-                                        </td>
+                                            </td>
 
-                                    </tr>
+                                            <td>
 
-                                )
-                            )}
+                                                ₹
+                                                {formatCurrency(
+                                                    application.loanAmount
+                                                )}
+
+                                            </td>
+
+                                            <td>
+
+                                                ₹
+                                                {formatCurrency(
+                                                    application.monthlyIncome
+                                                )}
+
+                                            </td>
+
+                                            <td>
+
+                                                {
+                                                    application.creditScore
+                                                }
+
+                                            </td>
+
+                                            <td>
+
+                                                <span
+                                                    className={`status ${
+    application.status?.toLowerCase()
+}`}
+                                                >
+                                                    {
+                                                        application.status
+                                                    }
+                                                </span>
+
+                                            </td>
+
+                                            <td>
+
+                                                <button
+                                                    className="view-button"
+                                                    onClick={() =>
+                                                        viewApplication(
+                                                            application.applicationId
+                                                        )
+                                                    }
+                                                >
+                                                    View Details →
+                                                </button>
+
+                                            </td>
+
+                                        </tr>
+
+                                    )
+                                )}
 
                             </tbody>
 
@@ -695,6 +750,7 @@ function Applications() {
         </div>
 
     );
+
 }
 
 export default Applications;
