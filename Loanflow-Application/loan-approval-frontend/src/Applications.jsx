@@ -192,7 +192,7 @@ function Applications() {
                     <div className="table-state">
                         <span className="large-spinner" />
                         <strong>Loading applications...</strong>
-                        <p>Connecting to the LoanFlow API.</p>
+                        <p>Connecting to the Credora API.</p>
                     </div>
                 ) : error ? (
                     <div className="table-state error-state">

@@ -9,7 +9,7 @@ const heroSlides = [
         title: "Credit decisions,",
         accent: "orchestrated intelligently.",
         description:
-            "LoanFlow combines a modern banking experience with Camunda 8 process orchestration to demonstrate how a digital lending journey can move from application to decision automatically.",
+            "Credora combines a modern banking experience with Camunda 8 process orchestration to demonstrate how a digital lending journey can move from application to decision automatically.",
         image:
             "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1600&q=85",
         stat: "92%",
@@ -167,7 +167,7 @@ function PrivacyContent() {
         <div className="legal-content">
             <div className="legal-callout">
                 <strong>Portfolio demonstration.</strong>
-                LoanFlow is a technical demonstration project and is not a
+                Credora is a technical demonstration project and is not a
                 real lending institution.
             </div>
 
@@ -213,14 +213,14 @@ function TermsContent() {
     return (
         <div className="legal-content">
             <div className="legal-callout">
-                These terms describe use of the LoanFlow portfolio
+                These terms describe use of the Credora portfolio
                 demonstration and should not be interpreted as terms for an
                 actual financial product.
             </div>
 
             <h3>1. Demonstration purpose</h3>
             <p>
-                LoanFlow exists to demonstrate digital lending workflow
+                Credora exists to demonstrate digital lending workflow
                 orchestration using React, Spring Boot, Java and Camunda 8.
             </p>
 
@@ -262,7 +262,7 @@ function SecurityContent() {
                 <div>
                     <strong>Demo environment</strong>
                     <p>
-                        LoanFlow is intentionally designed as a portfolio
+                        Credora is intentionally designed as a portfolio
                         project rather than a production banking platform.
                     </p>
                 </div>
@@ -307,7 +307,7 @@ function CareersContent() {
                 <span className="modal-eyebrow">CAREERS</span>
                 <h3>Build the future of process-driven finance.</h3>
                 <p>
-                    LoanFlow is currently a portfolio project. This section
+                    Credora is currently a portfolio project. This section
                     represents how a production fintech careers experience
                     could be structured.
                 </p>
@@ -352,7 +352,7 @@ function CareersContent() {
             <div className="demo-note">
                 Careers are illustrative in this portfolio implementation.
                 There are currently no live positions associated with
-                LoanFlow.
+                Credora.
             </div>
         </div>
     );
@@ -365,19 +365,19 @@ function ContactContent() {
                 <span className="modal-eyebrow">CONTACT</span>
                 <h3>Let's talk technology.</h3>
                 <p>
-                    LoanFlow is a portfolio project demonstrating modern
+                    Credora is a portfolio project demonstrating modern
                     workflow orchestration for digital lending.
                 </p>
             </div>
 
             <div className="contact-grid">
                 <a
-                    href="mailto:hello@loanflow.demo"
+                    href="mailto:hello@credora.demo"
                     className="contact-card"
                 >
                     <span>✉</span>
                     <strong>Email</strong>
-                    <small>hello@loanflow.demo</small>
+                    <small>hello@credora.demo</small>
                 </a>
 
                 <div className="contact-card">
@@ -538,46 +538,134 @@ function EmiCalculator() {
     );
 }
 
+
+function DecisionPlayground() {
+    const [score, setScore] = useState(750);
+    const [income, setIncome] = useState(80000);
+    const [amount, setAmount] = useState(500000);
+    const [running, setRunning] = useState(false);
+    const [step, setStep] = useState(-1);
+
+    const steps = [
+        "Application received",
+        "Financial profile validated",
+        "Credit signal evaluated",
+        "Decision rules evaluated",
+        "Outcome generated",
+    ];
+
+    const run = () => {
+        setRunning(true);
+        setStep(0);
+        let current = 0;
+        const timer = window.setInterval(() => {
+            current += 1;
+            if (current >= steps.length) {
+                window.clearInterval(timer);
+                setStep(steps.length - 1);
+                setRunning(false);
+                return;
+            }
+            setStep(current);
+        }, 650);
+    };
+
+    const outcome =
+        score >= 700 && income >= 50000 && amount <= income * 8
+            ? "APPROVED"
+            : score < 600
+                ? "REJECTED"
+                : "MANUAL REVIEW";
+
+    return (
+        <div className="decision-playground">
+            <div className="playground-form">
+                <div className="playground-heading">
+                    <span className="section-eyebrow">INTERACTIVE DEMO</span>
+                    <h3>Run a lending scenario.</h3>
+                    <p>Change the inputs and watch the simulated workflow move through its decision stages.</p>
+                </div>
+
+                <label>
+                    <span>Credit score <strong>{score}</strong></span>
+                    <input type="range" min="300" max="900" value={score} onChange={(e) => setScore(Number(e.target.value))} />
+                </label>
+
+                <label>
+                    <span>Monthly income <strong>₹{Number(income).toLocaleString("en-IN")}</strong></span>
+                    <input type="range" min="20000" max="250000" step="5000" value={income} onChange={(e) => setIncome(Number(e.target.value))} />
+                </label>
+
+                <label>
+                    <span>Loan amount <strong>₹{Number(amount).toLocaleString("en-IN")}</strong></span>
+                    <input type="range" min="50000" max="3000000" step="25000" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+                </label>
+
+                <button type="button" className="primary-button playground-run" onClick={run} disabled={running}>
+                    {running ? "Running workflow…" : "Run decision"}
+                    <span>{running ? "…" : "↗"}</span>
+                </button>
+            </div>
+
+            <div className="playground-runtime">
+                <div className="runtime-header">
+                    <div>
+                        <span>CAMUNDA 8 · DEMO RUNTIME</span>
+                        <strong>Decision pipeline</strong>
+                    </div>
+                    <span className={`runtime-status ${running ? "is-running" : ""}`}>
+                        <i /> {running ? "PROCESSING" : "READY"}
+                    </span>
+                </div>
+
+                <div className="runtime-steps">
+                    {steps.map((item, index) => (
+                        <div className={`runtime-step ${index <= step ? "done" : ""} ${index === step && running ? "current" : ""}`} key={item}>
+                            <span className="runtime-dot">{index <= step ? "✓" : String(index + 1).padStart(2, "0")}</span>
+                            <div>
+                                <small>0{index + 1}</small>
+                                <strong>{item}</strong>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className={`playground-outcome ${step === steps.length - 1 ? "visible" : ""}`}>
+                    <span>DEMO OUTCOME</span>
+                    <strong>{outcome}</strong>
+                    <small>Illustrative rules only — not a real credit decision.</small>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function App() {
     const [activePage, setActivePage] = useState("home");
     const [activeSlide, setActiveSlide] = useState(0);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [modal, setModal] = useState(null);
+    const [activeExplore, setActiveExplore] = useState("Lending");
+    const [activeArchitecture, setActiveArchitecture] = useState(2);
 
     const currentSlide = heroSlides[activeSlide];
 
     useEffect(() => {
-        if (activePage !== "home") {
-            return undefined;
-        }
-
+        if (activePage !== "home") return undefined;
         const timer = window.setInterval(() => {
             setActiveSlide((current) => (current + 1) % heroSlides.length);
         }, 6500);
-
         return () => window.clearInterval(timer);
     }, [activePage]);
 
     const goToSection = (id) => {
         setMobileMenuOpen(false);
-
         if (activePage !== "home") {
             setActivePage("home");
-
-            window.setTimeout(() => {
-                document.getElementById(id)?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                });
-            }, 80);
-
+            window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
             return;
         }
-
-        document.getElementById(id)?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-        });
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
     const openModal = (type) => {
@@ -586,657 +674,249 @@ function App() {
     };
 
     const renderModal = () => {
-        if (modal === "privacy") {
-            return (
-                <Modal
-                    title="Privacy Policy"
-                    eyebrow="PRIVACY"
-                    onClose={() => setModal(null)}
-                >
-                    <PrivacyContent />
-                </Modal>
-            );
-        }
-
-        if (modal === "terms") {
-            return (
-                <Modal
-                    title="Terms & Conditions"
-                    eyebrow="LEGAL"
-                    onClose={() => setModal(null)}
-                >
-                    <TermsContent />
-                </Modal>
-            );
-        }
-
-        if (modal === "security") {
-            return (
-                <Modal
-                    title="Security"
-                    eyebrow="TRUST & SECURITY"
-                    onClose={() => setModal(null)}
-                >
-                    <SecurityContent />
-                </Modal>
-            );
-        }
-
-        if (modal === "careers") {
-            return (
-                <Modal
-                    title="Careers"
-                    eyebrow="JOIN THE TEAM"
-                    onClose={() => setModal(null)}
-                >
-                    <CareersContent />
-                </Modal>
-            );
-        }
-
-        if (modal === "contact") {
-            return (
-                <Modal
-                    title="Contact"
-                    eyebrow="GET IN TOUCH"
-                    onClose={() => setModal(null)}
-                >
-                    <ContactContent />
-                </Modal>
-            );
-        }
-
-        if (modal === "emi") {
-            return (
-                <Modal
-                    title="EMI Calculator"
-                    eyebrow="CALCULATE"
-                    onClose={() => setModal(null)}
-                >
-                    <EmiCalculator />
-                </Modal>
-            );
-        }
-
-        return null;
+        const modalMap = {
+            privacy: ["Privacy Policy", "PRIVACY", <PrivacyContent />],
+            terms: ["Terms & Conditions", "LEGAL", <TermsContent />],
+            security: ["Security", "TRUST & SECURITY", <SecurityContent />],
+            careers: ["Careers", "JOIN THE TEAM", <CareersContent />],
+            contact: ["Contact", "GET IN TOUCH", <ContactContent />],
+            emi: ["EMI Calculator", "CALCULATE", <EmiCalculator />],
+        };
+        if (!modal || !modalMap[modal]) return null;
+        const [title, eyebrow, content] = modalMap[modal];
+        return <Modal title={title} eyebrow={eyebrow} onClose={() => setModal(null)}>{content}</Modal>;
     };
+
+    const explore = {
+        Lending: {
+            kicker: "DIGITAL LENDING",
+            title: "A simpler front door to a complex process.",
+            text: "Guide an applicant from first input to final outcome while the workflow handles the process behind the scenes.",
+            tags: ["Application", "Validation", "Decision", "Outcome"],
+        },
+        "AI Decisioning": {
+            kicker: "AI-READY DECISIONING",
+            title: "Make decisions explainable, not mysterious.",
+            text: "Use structured signals and configurable business rules as a foundation for intelligent decision experiences.",
+            tags: ["Credit score", "Income", "Risk signals", "Rules"],
+        },
+        "Workflow Automation": {
+            kicker: "PROCESS AUTOMATION",
+            title: "Move work forward automatically.",
+            text: "Camunda 8 coordinates the sequence, transitions and exception paths so individual services do not have to own the entire process.",
+            tags: ["BPMN", "Job workers", "Retries", "Exceptions"],
+        },
+        BPMN: {
+            kicker: "BPMN ORCHESTRATION",
+            title: "See the process as a living system.",
+            text: "Model the business journey visually and make each state, decision and exception explicit.",
+            tags: ["Start", "Tasks", "Gateways", "Events"],
+        },
+        DMN: {
+            kicker: "DECISION MANAGEMENT",
+            title: "Separate decision logic from application code.",
+            text: "Demonstrate how decision tables can express lending rules independently from the user interface.",
+            tags: ["Rules", "Hit policy", "Inputs", "Outputs"],
+        },
+    };
+
+    const activeExploreData = explore[activeExplore];
+
+    const architectureDetails = [
+        "Responsive customer-facing experience built with React and Vite.",
+        "REST APIs receive applications and initiate the workflow.",
+        "Camunda 8 coordinates the BPMN process and workflow execution.",
+        "Decision logic can be modelled independently using business rules.",
+    ];
 
     return (
         <div className="bank-app">
             <header className="navbar">
                 <div className="navbar-inner">
-                    <button
-                        type="button"
-                        className="brand"
-                        onClick={() => {
-                            setActivePage("home");
-                            setMobileMenuOpen(false);
-                            window.scrollTo({
-                                top: 0,
-                                behavior: "smooth",
-                            });
-                        }}
-                        aria-label="LoanFlow home"
-                    >
-                        <span className="brand-mark">L</span>
-
+                    <button type="button" className="brand" onClick={() => { setActivePage("home"); setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-label="Credora home">
+                        <span className="brand-mark">C</span>
                         <span className="brand-copy">
-                            <span className="brand-name">LoanFlow</span>
-                            <span className="brand-subtitle">
-                                Digital Lending
-                            </span>
+                            <span className="brand-name">Credora</span>
+                            <span className="brand-subtitle">Intelligent Lending</span>
                         </span>
                     </button>
 
-                    <button
-                        type="button"
-                        className="mobile-menu-button"
-                        onClick={() =>
-                            setMobileMenuOpen((current) => !current)
-                        }
-                        aria-label="Toggle navigation"
-                        aria-expanded={mobileMenuOpen}
-                    >
-                        <span />
-                        <span />
-                        <span />
+                    <button type="button" className="mobile-menu-button" onClick={() => setMobileMenuOpen((current) => !current)} aria-label="Toggle navigation" aria-expanded={mobileMenuOpen}>
+                        <span /><span /><span />
                     </button>
 
-                    <div
-                        className={`nav-right ${
-                            mobileMenuOpen ? "mobile-open" : ""
-                        }`}
-                    >
-                        <button
-                            type="button"
-                            className={`nav-link ${
-                                activePage === "home" ? "active" : ""
-                            }`}
-                            onClick={() => {
-                                setActivePage("home");
-                                goToSection("top");
-                            }}
-                        >
-                            Home
-                        </button>
-
-                        <button
-                            type="button"
-                            className="nav-link"
-                            onClick={() => goToSection("experience")}
-                        >
-                            Experience
-                        </button>
-
-                        <button
-                            type="button"
-                            className="nav-link"
-                            onClick={() => goToSection("technology")}
-                        >
-                            Technology
-                        </button>
-
-                        <button
-                            type="button"
-                            className={`nav-link ${
-                                activePage === "applications" ? "active" : ""
-                            }`}
-                            onClick={() => {
-                                setActivePage("applications");
-                                setMobileMenuOpen(false);
-                                window.scrollTo({
-                                    top: 0,
-                                    behavior: "smooth",
-                                });
-                            }}
-                        >
-                            Applications
-                        </button>
-
-                        <button
-                            type="button"
-                            className="nav-apply"
-                            onClick={() => goToSection("loan-application")}
-                        >
-                            Apply for a Loan
-                            <span>↗</span>
-                        </button>
-
-                        <span className="secure-badge">
-                            <span className="secure-dot" />
-                            Demo Environment
-                        </span>
+                    <div className={`nav-right ${mobileMenuOpen ? "mobile-open" : ""}`}>
+                        <button type="button" className="nav-link" onClick={() => goToSection("top")}>Home</button>
+                        <button type="button" className="nav-link" onClick={() => goToSection("experience")}>Platform</button>
+                        <button type="button" className="nav-link" onClick={() => goToSection("playground")}>Interactive Demo</button>
+                        <button type="button" className="nav-link" onClick={() => goToSection("technology")}>Technology</button>
+                        <button type="button" className={`nav-link ${activePage === "applications" ? "active" : ""}`} onClick={() => { setActivePage("applications"); setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Applications</button>
+                        <button type="button" className="nav-apply" onClick={() => goToSection("loan-application")}>Apply <span>↗</span></button>
+                        <span className="secure-badge"><span className="secure-dot" /> Demo Environment</span>
                     </div>
                 </div>
             </header>
 
             {activePage === "home" ? (
                 <main id="top">
-                    <section className="hero">
+                    <section className="hero hero-vimeo-inspired">
                         <div className="hero-image-layer">
                             {heroSlides.map((slide, index) => (
-                                <img
-                                    key={slide.title}
-                                    src={slide.image}
-                                    alt=""
-                                    className={`hero-image ${
-                                        index === activeSlide ? "visible" : ""
-                                    }`}
-                                />
+                                <img key={slide.title} src={slide.image} alt="" className={`hero-image ${index === activeSlide ? "visible" : ""}`} />
                             ))}
                         </div>
-
                         <div className="hero-overlay" />
-
                         <div className="hero-inner">
                             <div className="hero-content">
-                                <span className="hero-eyebrow">
-                                    {currentSlide.eyebrow}
-                                    <span />
-                                    CAMUNDA 8
-                                </span>
-
-                                <h1>
-                                    {currentSlide.title}
-                                    <em>{currentSlide.accent}</em>
-                                </h1>
-
+                                <span className="hero-eyebrow">{currentSlide.eyebrow}<span />CAMUNDA 8</span>
+                                <h1>{currentSlide.title}<em>{currentSlide.accent}</em></h1>
                                 <p>{currentSlide.description}</p>
-
                                 <div className="hero-actions">
-                                    <button
-                                        type="button"
-                                        className="primary-button"
-                                        onClick={() =>
-                                            goToSection("loan-application")
-                                        }
-                                    >
-                                        Start application
-                                        <span>↗</span>
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        className="secondary-button"
-                                        onClick={() =>
-                                            goToSection("experience")
-                                        }
-                                    >
-                                        Explore LoanFlow
-                                    </button>
+                                    <button type="button" className="primary-button" onClick={() => goToSection("loan-application")}>Start application <span>↗</span></button>
+                                    <button type="button" className="secondary-button" onClick={() => goToSection("playground")}>Run interactive demo</button>
                                 </div>
-
                                 <div className="hero-trust">
-                                    <div>
-                                        <strong>React</strong>
-                                        <span>Frontend</span>
-                                    </div>
-                                    <div>
-                                        <strong>Spring Boot</strong>
-                                        <span>API</span>
-                                    </div>
-                                    <div>
-                                        <strong>Camunda 8</strong>
-                                        <span>Workflow</span>
-                                    </div>
+                                    <div><strong>01</strong><span>Apply</span></div>
+                                    <div><strong>02</strong><span>Assess</span></div>
+                                    <div><strong>03</strong><span>Decide</span></div>
                                 </div>
                             </div>
 
                             <div className="hero-art">
                                 <div className="hero-stat-card">
-                                    <span className="mini-label">
-                                        WORKFLOW SIGNAL
-                                    </span>
-                                    <strong>{currentSlide.stat}</strong>
-                                    <span>{currentSlide.statLabel}</span>
+                                    <span className="mini-label">CURRENT JOURNEY</span>
+                                    <strong>01</strong>
+                                    <span>Application intake</span>
                                 </div>
-
                                 <div className="hero-flow-card">
-                                    <div className="flow-card-header">
-                                        <span>LIVE PROCESS</span>
-                                        <i />
-                                    </div>
-
+                                    <div className="flow-card-header"><span>LIVE PROCESS MAP</span><i /></div>
                                     <div className="flow-line">
-                                        <div className="flow-node complete">
-                                            <span>✓</span>
-                                        </div>
+                                        <div className="flow-node complete"><span>✓</span></div>
                                         <div className="flow-connector active" />
-                                        <div className="flow-node complete">
-                                            <span>✓</span>
-                                        </div>
+                                        <div className="flow-node complete"><span>✓</span></div>
                                         <div className="flow-connector active" />
-                                        <div className="flow-node current">
-                                            <span>AI</span>
-                                        </div>
+                                        <div className="flow-node pulse"><span>◆</span></div>
                                         <div className="flow-connector" />
-                                        <div className="flow-node">
-                                            <span>R</span>
-                                        </div>
+                                        <div className="flow-node"><span>→</span></div>
                                     </div>
-
-                                    <div className="flow-labels">
-                                        <span>Application</span>
-                                        <span>Validation</span>
-                                        <span>Decision</span>
-                                        <span>Review</span>
-                                    </div>
+                                    <div className="flow-labels"><span>APPLY</span><span>VALIDATE</span><span>DECIDE</span><span>OUTCOME</span></div>
                                 </div>
                             </div>
                         </div>
-
                         <div className="hero-controls">
-                            <div className="slide-count">
-                                <strong>
-                                    0{activeSlide + 1}
-                                </strong>
-                                <span>/ 0{heroSlides.length}</span>
-                            </div>
-
-                            <div className="slide-dots">
-                                {heroSlides.map((slide, index) => (
-                                    <button
-                                        key={slide.title}
-                                        type="button"
-                                        className={
-                                            index === activeSlide
-                                                ? "active"
-                                                : ""
-                                        }
-                                        onClick={() => setActiveSlide(index)}
-                                        aria-label={`Show slide ${
-                                            index + 1
-                                        }`}
-                                    />
-                                ))}
-                            </div>
-
+                            <span className="slide-count">0{activeSlide + 1} / 0{heroSlides.length}</span>
+                            <div className="slide-dots">{heroSlides.map((slide, index) => <button key={slide.title} type="button" className={index === activeSlide ? "active" : ""} onClick={() => setActiveSlide(index)} aria-label={`Show slide ${index + 1}`} />)}</div>
                             <div className="slide-arrows">
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setActiveSlide(
-                                            (activeSlide -
-                                                1 +
-                                                heroSlides.length) %
-                                            heroSlides.length
-                                        )
-                                    }
-                                    aria-label="Previous slide"
-                                >
-                                    ←
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setActiveSlide(
-                                            (activeSlide + 1) %
-                                            heroSlides.length
-                                        )
-                                    }
-                                    aria-label="Next slide"
-                                >
-                                    →
-                                </button>
+                                <button type="button" onClick={() => setActiveSlide((activeSlide - 1 + heroSlides.length) % heroSlides.length)} aria-label="Previous slide">←</button>
+                                <button type="button" onClick={() => setActiveSlide((activeSlide + 1) % heroSlides.length)} aria-label="Next slide">→</button>
                             </div>
                         </div>
                     </section>
 
-                    <section className="experience-section" id="experience">
+                    <section className="marquee-section">
+                        <div className="marquee-track">
+                            <span>Digital Lending</span><i>✦</i><span>Process Orchestration</span><i>✦</i><span>Decision Automation</span><i>✦</i><span>Camunda 8</span><i>✦</i><span>Digital Lending</span><i>✦</i><span>Process Orchestration</span>
+                        </div>
+                    </section>
+
+                    <section className="explore-section" id="experience">
                         <div className="section-shell">
                             <div className="section-heading split">
-                                <div>
-                                    <span className="section-eyebrow">
-                                        THE JOURNEY
-                                    </span>
-                                    <h2>
-                                        One application.
-                                        <br />
-                                        <span>An intelligent journey.</span>
-                                    </h2>
-                                </div>
-
-                                <p>
-                                    A realistic lending experience should feel
-                                    simple to the customer even when the
-                                    underlying process is complex.
-                                </p>
+                                <div><span className="section-eyebrow">EXPLORE THE PLATFORM</span><h2>Complex underneath.<br /><span>Simple up front.</span></h2></div>
+                                <p>Explore how the Credora experience connects customer input, business rules and workflow orchestration into one visible journey.</p>
                             </div>
 
-                            <div className="journey-grid">
-                                {journeySteps.map((step) => (
-                                    <article
-                                        className="journey-card"
-                                        key={step.number}
-                                    >
-                                        <div className="journey-top">
-                                            <span>{step.number}</span>
-                                            <strong>{step.icon}</strong>
-                                        </div>
+                            <div className="explore-tabs" role="tablist">
+                                {Object.keys(explore).map((item) => (
+                                    <button type="button" role="tab" aria-selected={activeExplore === item} className={activeExplore === item ? "active" : ""} key={item} onClick={() => setActiveExplore(item)}>
+                                        {item}<span>↗</span>
+                                    </button>
+                                ))}
+                            </div>
 
-                                        <h3>{step.title}</h3>
-                                        <p>{step.description}</p>
-
-                                        <div className="journey-progress">
-                                            <span />
+                            <div className="explore-feature">
+                                <div className="explore-feature-copy">
+                                    <span className="feature-kicker">{activeExploreData.kicker}</span>
+                                    <h3>{activeExploreData.title}</h3>
+                                    <p>{activeExploreData.text}</p>
+                                    <div className="feature-tags">{activeExploreData.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+                                </div>
+                                <div className="explore-visual">
+                                    <div className="visual-grid" />
+                                    <div className="visual-window">
+                                        <div className="window-top"><span>credora / process</span><i /><i /><i /></div>
+                                        <div className="visual-process">
+                                            <div className="process-box done">Application</div><span>→</span>
+                                            <div className="process-box done">Validation</div><span>→</span>
+                                            <div className="process-box current">Decision</div>
+                                            <div className="process-branches"><div>✓ Approved</div><div>◎ Review</div><div>× Rejected</div></div>
                                         </div>
+                                    </div>
+                                    <div className="floating-code"><span>DMN</span><strong>Decision rules</strong><small>Evaluating inputs…</small></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="journey-section">
+                        <div className="section-shell">
+                            <div className="journey-intro"><span className="section-eyebrow">FOLLOW THE JOURNEY</span><h2>One application.<br /><span>Six visible stages.</span></h2><p>A realistic lending experience should feel simple to the customer even when the underlying process is complex.</p></div>
+                            <div className="journey-scroll">
+                                {journeySteps.map((step, index) => (
+                                    <article className={`journey-card ${index === 3 ? "featured" : ""}`} key={step.number}>
+                                        <div className="journey-top"><span>{step.number}</span><strong>{step.icon}</strong></div>
+                                        <div className="journey-line"><span /></div>
+                                        <h3>{step.title}</h3><p>{step.description}</p>
+                                        <small>{index < 3 ? "AUTOMATED" : index === 4 ? "HUMAN-IN-THE-LOOP" : "WORKFLOW OUTCOME"}</small>
                                     </article>
                                 ))}
                             </div>
                         </div>
                     </section>
 
+                    <section className="playground-section" id="playground">
+                        <div className="section-shell">
+                            <div className="section-heading centered"><span className="section-eyebrow">PLAY WITH THE PROCESS</span><h2>Don't just read about it.<br /><span>Run it.</span></h2><p>Change the scenario, trigger the simulated decision pipeline and see how a workflow experience can communicate its state.</p></div>
+                            <DecisionPlayground />
+                        </div>
+                    </section>
+
                     <section className="decision-section">
                         <div className="section-shell">
                             <div className="decision-layout">
-                                <div className="decision-copy">
-                                    <span className="section-eyebrow">
-                                        INTELLIGENT DECISIONING
-                                    </span>
-
-                                    <h2>
-                                        Turn business rules into an
-                                        <span> executable process.</span>
-                                    </h2>
-
-                                    <p>
-                                        LoanFlow demonstrates how decision
-                                        logic can sit inside an orchestrated
-                                        process. Instead of hard-coding every
-                                        path into application logic, the
-                                        workflow can route applications based
-                                        on business conditions.
-                                    </p>
-
-                                    <div className="decision-points">
-                                        <div>
-                                            <span>01</span>
-                                            <strong>Credit score</strong>
-                                            <small>Risk signal</small>
-                                        </div>
-                                        <div>
-                                            <span>02</span>
-                                            <strong>Income</strong>
-                                            <small>Affordability signal</small>
-                                        </div>
-                                        <div>
-                                            <span>03</span>
-                                            <strong>Loan amount</strong>
-                                            <small>Exposure signal</small>
-                                        </div>
-                                    </div>
+                                <div className="decision-copy"><span className="section-eyebrow">DECISION MANAGEMENT</span><h2>Rules that can live <span>outside the code.</span></h2><p>Credora demonstrates a rules-driven decision experience where credit score, income and loan amount become inputs to an illustrative decision path.</p>
+                                    <div className="decision-points"><div><span>01</span><strong>Credit score</strong><small>Risk signal</small></div><div><span>02</span><strong>Income</strong><small>Affordability</small></div><div><span>03</span><strong>Loan amount</strong><small>Exposure</small></div></div>
                                 </div>
-
-                                <div className="decision-dashboard">
-                                    <div className="dashboard-top">
-                                        <div>
-                                            <span>DECISION ENGINE</span>
-                                            <strong>Loan assessment</strong>
-                                        </div>
-                                        <div className="live-pill">
-                                            <i />
-                                            LIVE DEMO
-                                        </div>
-                                    </div>
-
-                                    <div className="risk-score">
-                                        <div className="score-ring">
-                                            <span>82</span>
-                                            <small>LOW RISK</small>
-                                        </div>
-
-                                        <div className="score-details">
-                                            <div>
-                                                <span>Credit score</span>
-                                                <strong>750</strong>
-                                            </div>
-                                            <div>
-                                                <span>Monthly income</span>
-                                                <strong>₹80K</strong>
-                                            </div>
-                                            <div>
-                                                <span>Loan amount</span>
-                                                <strong>₹5L</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="decision-result">
-                                        <span>RECOMMENDED PATH</span>
-                                        <strong>
-                                            <i />
-                                            Automated approval
-                                        </strong>
-                                        <small>
-                                            Based on demonstration business
-                                            rules
-                                        </small>
-                                    </div>
-                                </div>
+                                <div className="decision-dashboard"><div className="dashboard-top"><div><span>DECISION ENGINE</span><strong>Illustrative assessment</strong></div><div className="live-pill"><i /> DEMO</div></div><div className="risk-score"><div className="score-ring"><span>82</span><small>LOW RISK</small></div><div className="score-details"><div><span>Credit score</span><strong>750</strong></div><div><span>Monthly income</span><strong>₹80K</strong></div><div><span>Loan amount</span><strong>₹5L</strong></div></div></div><div className="decision-result"><span>RECOMMENDED PATH</span><strong><i /> Automated approval</strong><small>Based on demonstration business rules</small></div></div>
                             </div>
                         </div>
                     </section>
 
                     <section className="architecture-section" id="technology">
                         <div className="section-shell">
-                            <div className="section-heading centered">
-                                <span className="section-eyebrow">
-                                    UNDER THE HOOD
-                                </span>
-                                <h2>
-                                    Built around
-                                    <span> orchestration.</span>
-                                </h2>
-                                <p>
-                                    A technology stack designed to separate
-                                    customer experience, APIs, process
-                                    orchestration and decision logic.
-                                </p>
+                            <div className="section-heading centered"><span className="section-eyebrow">UNDER THE HOOD</span><h2>Built around <span>orchestration.</span></h2><p>Click each layer to see how the pieces fit together.</p></div>
+                            <div className="architecture-interactive">
+                                <div className="architecture-nav">{architecture.map((item, index) => <button type="button" key={item.title} className={activeArchitecture === index ? "active" : ""} onClick={() => setActiveArchitecture(index)}><span>{String(index + 1).padStart(2, "0")}</span><strong>{item.title}</strong><em>↗</em></button>)}</div>
+                                <div className="architecture-detail"><span className="detail-number">0{activeArchitecture + 1}</span><span className="feature-kicker">{architecture[activeArchitecture].label}</span><h3>{architecture[activeArchitecture].title}</h3><p>{architecture[activeArchitecture].description}</p><div className="detail-message">{architectureDetails[activeArchitecture]}</div><div className="architecture-mini-flow"><span>REQUEST</span><i>→</i><span>PROCESS</span><i>→</i><span>DECISION</span><i>→</i><span>OUTCOME</span></div></div>
                             </div>
-
-                            <div className="architecture-flow">
-                                {architecture.map((item, index) => (
-                                    <div
-                                        className="architecture-item"
-                                        key={item.title}
-                                    >
-                                        <div className="architecture-card">
-                                            <div className="architecture-icon">
-                                                {item.icon}
-                                            </div>
-                                            <span>{item.label}</span>
-                                            <h3>{item.title}</h3>
-                                            <p>{item.description}</p>
-                                        </div>
-
-                                        {index < architecture.length - 1 && (
-                                            <div className="architecture-arrow">
-                                                →
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="architecture-note">
-                                <div>
-                                    <span className="note-icon">C8</span>
-                                    <div>
-                                        <strong>Camunda 8 orchestration</strong>
-                                        <p>
-                                            BPMN coordinates the process while
-                                            application services execute the
-                                            individual tasks.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <span className="note-status">
-                                    <i />
-                                    PROCESS READY
-                                </span>
-                            </div>
+                            <div className="architecture-note"><div><span className="note-icon">C8</span><div><strong>Camunda 8 orchestration</strong><p>BPMN coordinates the process while application services execute individual tasks.</p></div></div><span className="note-status"><i /> PROCESS READY</span></div>
                         </div>
                     </section>
 
-                    <section
-                        className="application-section"
-                        id="loan-application"
-                    >
+                    <section className="application-section" id="loan-application">
                         <div className="section-shell">
-                            <div className="section-heading split">
-                                <div>
-                                    <span className="section-eyebrow">
-                                        DIGITAL APPLICATION
-                                    </span>
-                                    <h2>
-                                        Put the workflow
-                                        <br />
-                                        <span>into motion.</span>
-                                    </h2>
-                                </div>
-
-                                <p>
-                                    Enter demonstration values and watch the
-                                    Camunda-powered lending workflow process
-                                    the application.
-                                </p>
-                            </div>
-
-                            <LoanApplication
-                                onViewApplications={() => {
-                                    setActivePage("applications");
-                                    window.scrollTo({
-                                        top: 0,
-                                        behavior: "smooth",
-                                    });
-                                }}
-                            />
+                            <div className="section-heading split"><div><span className="section-eyebrow">DIGITAL APPLICATION</span><h2>Put the workflow<br /><span>into motion.</span></h2></div><p>Enter demonstration values and watch the Camunda-powered lending workflow process the application.</p></div>
+                            <LoanApplication onViewApplications={() => { setActivePage("applications"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
                         </div>
                     </section>
 
                     <section className="pre-footer">
-                        <div className="section-shell">
-                            <div className="pre-footer-card">
-                                <div>
-                                    <span className="section-eyebrow">
-                                        LOANFLOW
-                                    </span>
-                                    <h2>
-                                        Finance workflows,
-                                        <br />
-                                        <span>made visible.</span>
-                                    </h2>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    className="primary-button"
-                                    onClick={() =>
-                                        goToSection("loan-application")
-                                    }
-                                >
-                                    Try the demo
-                                    <span>↗</span>
-                                </button>
-                            </div>
-                        </div>
+                        <div className="section-shell"><div className="pre-footer-card"><div><span className="section-eyebrow">CREDORA</span><h2>Finance workflows,<br /><span>made visible.</span></h2></div><button type="button" className="primary-button" onClick={() => goToSection("loan-application")}>Try the demo <span>↗</span></button></div></div>
                     </section>
                 </main>
             ) : (
                 <main className="applications-page">
-                    <div className="page-header">
-                        <div>
-                            <span className="section-eyebrow">
-                                LOANFLOW CONSOLE
-                            </span>
-                            <h1>Applications</h1>
-                            <p>
-                                Monitor loan applications processed by the
-                                demonstration workflow.
-                            </p>
-                        </div>
-
-                        <button
-                            type="button"
-                            className="primary-button"
-                            onClick={() => {
-                                setActivePage("home");
-                                window.setTimeout(() => {
-                                    document
-                                        .getElementById("loan-application")
-                                        ?.scrollIntoView({
-                                            behavior: "smooth",
-                                        });
-                                }, 80);
-                            }}
-                        >
-                            New application
-                            <span>↗</span>
-                        </button>
-                    </div>
-
+                    <div className="page-header"><div><span className="section-eyebrow">CREDORA CONSOLE</span><h1>Applications</h1><p>Monitor loan applications processed by the demonstration workflow.</p></div><button type="button" className="primary-button" onClick={() => { setActivePage("home"); window.setTimeout(() => document.getElementById("loan-application")?.scrollIntoView({ behavior: "smooth" }), 80); }}>New application <span>↗</span></button></div>
                     <Applications />
                 </main>
             )}
@@ -1245,160 +925,18 @@ function App() {
                 <div className="footer-main">
                     <div className="section-shell footer-grid">
                         <div className="footer-company">
-                            <button
-                                type="button"
-                                className="footer-brand"
-                                onClick={() => {
-                                    setActivePage("home");
-                                    window.scrollTo({
-                                        top: 0,
-                                        behavior: "smooth",
-                                    });
-                                }}
-                            >
-                                <span className="brand-mark">L</span>
-                                <span>
-                                    <strong>LoanFlow</strong>
-                                    <small>Digital Lending</small>
-                                </span>
-                            </button>
-
-                            <p>
-                                LoanFlow is a portfolio demonstration showing
-                                how modern digital lending experiences can be
-                                connected to process orchestration using
-                                Camunda 8.
-                            </p>
-
-                            <p>
-                                The project is designed for engineering
-                                demonstration and does not represent a bank,
-                                NBFC, lender or financial institution.
-                            </p>
-
-                            <div className="footer-status">
-                                <span>
-                                    <i />
-                                    Demo systems operational
-                                </span>
-                            </div>
+                            <button type="button" className="footer-brand" onClick={() => { setActivePage("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}><span className="brand-mark">C</span><span><strong>Credora</strong><small>Intelligent Lending</small></span></button>
+                            <p>Credora is a portfolio demonstration showing how a modern lending experience can connect customer journeys with workflow orchestration and decision management.</p>
+                            <p>This is not a bank, NBFC, lender or financial institution. No real loan applications are processed.</p>
+                            <div className="footer-status"><span><i /> Demo environment</span></div>
                         </div>
-
-                        <div className="footer-column">
-                            <h4>Product</h4>
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    goToSection("loan-application")
-                                }
-                            >
-                                Apply for a Loan
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setActivePage("applications")}
-                            >
-                                Applications
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => openModal("emi")}
-                            >
-                                EMI Calculator
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => goToSection("technology")}
-                            >
-                                Technology
-                            </button>
-                        </div>
-
-                        <div className="footer-column">
-                            <h4>Company</h4>
-
-                            <button
-                                type="button"
-                                onClick={() => openModal("careers")}
-                            >
-                                Careers
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => openModal("contact")}
-                            >
-                                Contact
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => openModal("security")}
-                            >
-                                Security
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => openModal("privacy")}
-                            >
-                                Privacy
-                            </button>
-                        </div>
-
-                        <div className="footer-column">
-                            <h4>Legal</h4>
-
-                            <button
-                                type="button"
-                                onClick={() => openModal("terms")}
-                            >
-                                Terms & Conditions
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => openModal("privacy")}
-                            >
-                                Privacy Policy
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => openModal("security")}
-                            >
-                                Data & Security
-                            </button>
-
-                            <span className="footer-legal-note">
-                                Last updated: September 2026
-                            </span>
-                        </div>
+                        <div className="footer-column"><h4>Product</h4><button type="button" onClick={() => goToSection("loan-application")}>Apply for a Loan</button><button type="button" onClick={() => setActivePage("applications")}>Applications</button><button type="button" onClick={() => openModal("emi")}>EMI Calculator</button><button type="button" onClick={() => goToSection("technology")}>Technology</button></div>
+                        <div className="footer-column"><h4>Explore</h4><button type="button" onClick={() => goToSection("experience")}>Platform</button><button type="button" onClick={() => goToSection("playground")}>Interactive Demo</button><button type="button" onClick={() => goToSection("technology")}>Architecture</button><button type="button" onClick={() => openModal("security")}>Security</button></div>
+                        <div className="footer-column"><h4>Company</h4><button type="button" onClick={() => openModal("careers")}>Careers</button><button type="button" onClick={() => openModal("contact")}>Contact</button><button type="button" onClick={() => openModal("privacy")}>Privacy</button><button type="button" onClick={() => openModal("terms")}>Terms & Conditions</button></div>
                     </div>
                 </div>
-
-                <div className="footer-bottom">
-                    <div className="section-shell footer-bottom-inner">
-                        <span>
-                            © {new Date().getFullYear()} LoanFlow. Portfolio
-                            demonstration.
-                        </span>
-
-                        <span>
-                            Built with React · Spring Boot · Java · Camunda 8
-                        </span>
-
-                        <span>
-                            Designed by <strong>Prasad Labhe</strong>
-                        </span>
-                    </div>
-                </div>
+                <div className="footer-bottom"><div className="section-shell footer-bottom-inner"><span>© {new Date().getFullYear()} Credora. Portfolio demonstration.</span><span>React · Spring Boot · Java · Camunda 8</span><span>Designed by <strong>Prasad Labhe</strong></span></div></div>
             </footer>
-
             {renderModal()}
         </div>
     );
