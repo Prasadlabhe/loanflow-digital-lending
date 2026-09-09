@@ -7,6 +7,7 @@ function Applications() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [refreshing, setRefreshing] = useState(false);
+    const [selectedApplication, setSelectedApplication] = useState(null);
 
     const loadApplications = useCallback(async (isRefresh = false) => {
         if (isRefresh) {
@@ -75,6 +76,28 @@ function Applications() {
             cancelled = true;
         };
     }, []);
+
+    useEffect(() => {
+        if (!selectedApplication) {
+            return undefined;
+        }
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") {
+                setSelectedApplication(null);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [selectedApplication]);
 
     const formatCurrency = (value) =>
         new Intl.NumberFormat("en-IN", {
@@ -192,7 +215,7 @@ function Applications() {
                     <div className="table-state">
                         <span className="large-spinner" />
                         <strong>Loading applications...</strong>
-                        <p>Connecting to the Credora API.</p>
+                        <p>Connecting to the LoanFlow API.</p>
                     </div>
                 ) : error ? (
                     <div className="table-state error-state">
@@ -229,6 +252,7 @@ function Applications() {
                                     <th>Credit score</th>
                                     <th>Status</th>
                                     <th>Created</th>
+                                    <th>Action</th>
                                 </tr>
                                 </thead>
 
@@ -295,6 +319,19 @@ function Applications() {
                                             {formatDate(
                                                 application.createdAt
                                             )}
+                                        </td>
+
+                                        <td>
+                                            <button
+                                                type="button"
+                                                className="view-details-button"
+                                                onClick={() =>
+                                                    setSelectedApplication(application)
+                                                }
+                                            >
+                                                View details
+                                                <span>↗</span>
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -371,12 +408,209 @@ function Applications() {
                                             </strong>
                                         </div>
                                     </div>
+
+                                    <button
+                                        type="button"
+                                        className="view-details-button"
+                                        onClick={() =>
+                                            setSelectedApplication(application)
+                                        }
+                                    >
+                                        View details
+                                        <span>↗</span>
+                                    </button>
                                 </article>
                             ))}
                         </div>
                     </>
                 )}
             </div>
+
+            {selectedApplication && (
+                <div
+                    className="application-details-overlay"
+                    role="presentation"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            setSelectedApplication(null);
+                        }
+                    }}
+                >
+                    <div
+                        className="application-details-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="application-details-title"
+                    >
+                        <div className="modal-header">
+                            <div>
+                                <span className="section-eyebrow">
+                                    APPLICATION DETAILS
+                                </span>
+                                <h2 id="application-details-title">
+                                    {selectedApplication.applicationId ||
+                                        selectedApplication.processInstanceKey ||
+                                        "Application"}
+                                </h2>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="modal-close"
+                                onClick={() => setSelectedApplication(null)}
+                                aria-label="Close application details"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="modal-body">
+                            <div className="application-details-identity">
+                                <div>
+                                    <strong>
+                                        {selectedApplication.applicationId ||
+                                            "No application ID"}
+                                    </strong>
+                                    <small>Application ID</small>
+                                </div>
+
+                                <span
+                                    className={`status-pill ${getStatusClass(
+                                        selectedApplication.status
+                                    )}`}
+                                >
+                                    <i />
+                                    {selectedApplication.status || "UNKNOWN"}
+                                </span>
+                            </div>
+
+                            <div className="modal-section">
+                                <div className="modal-section-title">
+                                    Application information
+                                </div>
+
+                                <div className="detail-grid">
+                                    <div className="detail-item">
+                                        <span>Applicant</span>
+                                        <strong>
+                                            {selectedApplication.applicantName ||
+                                                "—"}
+                                        </strong>
+                                    </div>
+
+                                    <div className="detail-item">
+                                        <span>Loan amount</span>
+                                        <strong>
+                                            {formatCurrency(
+                                                selectedApplication.loanAmount
+                                            )}
+                                        </strong>
+                                    </div>
+
+                                    <div className="detail-item">
+                                        <span>Monthly income</span>
+                                        <strong>
+                                            {formatCurrency(
+                                                selectedApplication.monthlyIncome
+                                            )}
+                                        </strong>
+                                    </div>
+
+                                    <div className="detail-item">
+                                        <span>Credit score</span>
+                                        <strong>
+                                            {selectedApplication.creditScore ||
+                                                "—"}
+                                        </strong>
+                                    </div>
+
+                                    <div className="detail-item">
+                                        <span>Process instance key</span>
+                                        <strong>
+                                            {selectedApplication.processInstanceKey ||
+                                                "—"}
+                                        </strong>
+                                    </div>
+
+                                    <div className="detail-item">
+                                        <span>Created at</span>
+                                        <strong>
+                                            {formatDate(
+                                                selectedApplication.createdAt
+                                            )}
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="reviewer-section">
+                                <div className="modal-section-title">
+                                    Manual review
+                                </div>
+
+                                {selectedApplication.reviewedBy ||
+                                selectedApplication.reviewDecision ||
+                                selectedApplication.reviewedAt ||
+                                selectedApplication.reviewComment ? (
+                                    <div className="reviewer-grid">
+                                        <div className="detail-item">
+                                            <span>Reviewed by</span>
+                                            <strong>
+                                                {selectedApplication.reviewedBy ||
+                                                    "—"}
+                                            </strong>
+                                        </div>
+
+                                        <div className="detail-item">
+                                            <span>Review decision</span>
+                                            <strong>
+                                                {selectedApplication.reviewDecision ||
+                                                    "—"}
+                                            </strong>
+                                        </div>
+
+                                        <div className="detail-item">
+                                            <span>Reviewed at</span>
+                                            <strong>
+                                                {formatDate(
+                                                    selectedApplication.reviewedAt
+                                                )}
+                                            </strong>
+                                        </div>
+
+                                        <div className="detail-item reviewer-comment">
+                                            <span>Review comment</span>
+                                            <strong>
+                                                {selectedApplication.reviewComment ||
+                                                    "No comment provided."}
+                                            </strong>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="no-review-data">
+                                        No manual review information is available
+                                        for this application.
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="application-details-footer">
+                                <small>
+                                    Demonstration workflow data • not a real credit
+                                    decision
+                                </small>
+                                <button
+                                    type="button"
+                                    className="secondary-button dark"
+                                    onClick={() => setSelectedApplication(null)}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="applications-disclaimer">
                 <span>i</span>

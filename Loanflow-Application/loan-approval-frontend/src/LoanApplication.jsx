@@ -466,12 +466,39 @@ function LoanApplication({ onViewApplications }) {
                         </div>
                     </div>
 
-                    {application.reviewedBy && (
+                    {(application.reviewedBy ||
+                        application.reviewDecision ||
+                        application.reviewedAt ||
+                        application.reviewComment) && (
                         <div className="review-details">
-                            <div>
-                                <span>Reviewed by</span>
-                                <strong>{application.reviewedBy}</strong>
-                            </div>
+                            {application.reviewedBy && (
+                                <div>
+                                    <span>Reviewed by</span>
+                                    <strong>{application.reviewedBy}</strong>
+                                </div>
+                            )}
+
+                            {application.reviewDecision && (
+                                <div>
+                                    <span>Review decision</span>
+                                    <strong>{application.reviewDecision}</strong>
+                                </div>
+                            )}
+
+                            {application.reviewedAt && (
+                                <div>
+                                    <span>Reviewed at</span>
+                                    <strong>
+                                        {new Intl.DateTimeFormat("en-IN", {
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        }).format(new Date(application.reviewedAt))}
+                                    </strong>
+                                </div>
+                            )}
 
                             {application.reviewComment && (
                                 <div>
