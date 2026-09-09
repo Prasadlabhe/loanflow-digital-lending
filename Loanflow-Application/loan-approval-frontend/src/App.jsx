@@ -538,6 +538,108 @@ function EmiCalculator() {
     );
 }
 
+function DecisionPlayground() {
+    const [score, setScore] = useState(750);
+    const [income, setIncome] = useState(80000);
+    const [amount, setAmount] = useState(500000);
+    const [running, setRunning] = useState(false);
+    const [step, setStep] = useState(-1);
+
+    const steps = [
+        "Application received",
+        "Financial profile validated",
+        "Credit signal evaluated",
+        "Decision rules evaluated",
+        "Outcome generated",
+    ];
+
+    const run = () => {
+        setRunning(true);
+        setStep(0);
+        let current = 0;
+        const timer = window.setInterval(() => {
+            current += 1;
+            if (current >= steps.length) {
+                window.clearInterval(timer);
+                setStep(steps.length - 1);
+                setRunning(false);
+                return;
+            }
+            setStep(current);
+        }, 650);
+    };
+
+    const outcome =
+        score >= 700 && income >= 50000 && amount <= income * 8
+            ? "APPROVED"
+            : score < 600
+                ? "REJECTED"
+                : "MANUAL REVIEW";
+
+    return (
+        <div className="decision-playground">
+            <div className="playground-form">
+                <div className="playground-heading">
+                    <span className="section-eyebrow">INTERACTIVE DEMO</span>
+                    <h3>Run a lending scenario.</h3>
+                    <p>Change the inputs and watch the simulated workflow move through its decision stages.</p>
+                </div>
+
+                <label>
+                    <span>Credit score <strong>{score}</strong></span>
+                    <input type="range" min="300" max="900" value={score} onChange={(e) => setScore(Number(e.target.value))} />
+                </label>
+
+                <label>
+                    <span>Monthly income <strong>₹{Number(income).toLocaleString("en-IN")}</strong></span>
+                    <input type="range" min="20000" max="250000" step="5000" value={income} onChange={(e) => setIncome(Number(e.target.value))} />
+                </label>
+
+                <label>
+                    <span>Loan amount <strong>₹{Number(amount).toLocaleString("en-IN")}</strong></span>
+                    <input type="range" min="50000" max="3000000" step="25000" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+                </label>
+
+                <button type="button" className="primary-button playground-run" onClick={run} disabled={running}>
+                    {running ? "Running workflow…" : "Run decision"}
+                    <span>{running ? "…" : "↗"}</span>
+                </button>
+            </div>
+
+            <div className="playground-runtime">
+                <div className="runtime-header">
+                    <div>
+                        <span>CAMUNDA 8 · DEMO RUNTIME</span>
+                        <strong>Decision pipeline</strong>
+                    </div>
+                    <span className={`runtime-status ${running ? "is-running" : ""}`}>
+                        <i /> {running ? "PROCESSING" : "READY"}
+                    </span>
+                </div>
+
+                <div className="runtime-steps">
+                    {steps.map((item, index) => (
+                        <div className={`runtime-step ${index <= step ? "done" : ""} ${index === step && running ? "current" : ""}`} key={item}>
+                            <span className="runtime-dot">{index <= step ? "✓" : String(index + 1).padStart(2, "0")}</span>
+                            <div>
+                                <small>0{index + 1}</small>
+                                <strong>{item}</strong>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className={`playground-outcome ${step === steps.length - 1 ? "visible" : ""}`}>
+                    <span>DEMO OUTCOME</span>
+                    <strong>{outcome}</strong>
+                    <small>Illustrative rules only — not a real credit decision.</small>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+
 function App() {
     const [activePage, setActivePage] = useState("home");
     const [activeSlide, setActiveSlide] = useState(0);
@@ -1075,6 +1177,8 @@ function App() {
                                     </div>
                                 </div>
                             </div>
+
+                            <DecisionPlayground />
                         </div>
                     </section>
 
